@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, viewport-fit=cover, orientation=landscape">
+          content="width=device-width, initial-scale=1.0">
     <title>Channel Hub - Live TV Player</title>
 
     <!-- Fonts -->
@@ -24,12 +24,14 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         html, body {
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Force TV-like full screen */
+            overflow: hidden;
             background: #050509;
             color: #E0E0E0;
         }
@@ -45,7 +47,7 @@
             height: 100vh;
             width: 100vw;
             position: relative;
-            background: radial-gradient(circle at top left, #202331 0, #050509 60%);
+            background: radial-gradient(circle at top left, #1a2033 0%, #050509 60%);
         }
 
         .main-content {
@@ -56,36 +58,38 @@
 
         /* Channels Sidebar */
         .channels-sidebar {
-            width: 360px;
-            max-width: 33vw;
+            width: 380px; /* Slightly wider */
+            max-width: 400px;
+            min-width: 280px;
             background: rgba(8, 8, 12, 0.96);
             border-right: 1px solid #262b3b;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             backdrop-filter: blur(20px);
+            flex-shrink: 0; /* Prevents sidebar from shrinking unexpectedly */
         }
 
         .sidebar-header {
             padding: 16px 18px 12px;
             border-bottom: 1px solid #262b3b;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
         }
 
-        .sidebar-header-left {
+        .sidebar-header-top {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .sidebar-title {
             color: #FFFFFF;
-            font-size: 1.05em;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            font-size: 1.2em;
+            font-weight: 700;
+            letter-spacing: 0.04em;
         }
 
         .sidebar-subtitle {
@@ -94,31 +98,36 @@
             margin-top: 4px;
         }
 
-        /* Search moved to top-right INSIDE channels list */
+        /* Search Bar Design Improvement */
         .sidebar-search {
-            flex-shrink: 0;
-            margin-left: 12px;
+            flex-grow: 1;
         }
 
         #channel-search {
-            width: 200px;
-            padding: 9px 10px;
-            font-size: 0.9em;
-            border-radius: 999px;
-            border: 1px solid #3B4255;
+            width: 100%;
+            padding: 10px 16px;
+            font-size: 0.95em;
+            border-radius: 8px;
+            border: 2px solid #3B4255;
             background: #10131D;
             color: #E5E7EB;
             outline: none;
             transition: all 0.2s;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        #channel-search::placeholder {
+            color: #6B7280;
         }
 
         #channel-search:focus {
             border-color: #4CAF50;
             box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
+            background: #161a29;
         }
 
         .channel-grid {
-            padding: 12px;
+            padding: 16px 12px;
             flex: 1;
             overflow-y: auto;
         }
@@ -126,53 +135,55 @@
         .channel-section-label {
             font-size: 0.8em;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #6B7280;
-            margin: 4px 4px 10px;
+            letter-spacing: 0.15em;
+            color: #4CAF50;
+            margin: 14px 4px 14px;
+            font-weight: 600;
         }
 
         .channel-card {
             background: #151826;
-            border-radius: 14px;
-            margin-bottom: 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
             cursor: pointer;
             border: 2px solid transparent;
             display: flex;
             align-items: center;
-            padding: 6px 8px;
-            gap: 10px;
+            padding: 8px;
+            gap: 12px;
             transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s, background 0.18s;
             outline: none;
         }
 
         .channel-card:hover {
-            transform: translateX(2px);
+            transform: scale(1.01);
             border-color: rgba(76, 175, 80, 0.5);
         }
 
-        /* Strong focus state for Android TV remotes */
+        /* Strong focus state for D-pad navigation */
         .channel-card:focus-visible {
             border-color: #FFEB3B;
-            box-shadow: 0 0 0 3px rgba(255, 235, 59, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 235, 59, 0.5), 0 0 10px rgba(255, 235, 59, 0.2);
             background: #1E2134;
         }
 
         .channel-card.active {
             border-color: #4CAF50;
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.6);
-            background: linear-gradient(90deg, #171b28 0, #10151f 40%);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.8);
+            background: linear-gradient(90deg, #171b28 0%, #10151f 80%);
         }
 
         .channel-logo-wrapper {
-            width: 92px;
-            height: 52px;
-            border-radius: 10px;
+            width: 100px;
+            height: 56px;
+            border-radius: 8px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             background: #050814;
             flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
         .channel-logo {
@@ -181,16 +192,9 @@
             object-fit: contain;
         }
 
-        .channel-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
         .channel-title {
             font-weight: 600;
-            font-size: 0.95em;
+            font-size: 1em;
             color: #F9FAFB;
             white-space: nowrap;
             overflow: hidden;
@@ -199,11 +203,11 @@
 
         .channel-meta {
             margin-top: 4px;
-            font-size: 0.75em;
-            color: #9CA3AF;
+            font-size: 0.78em;
+            color: #A0AEC0;
         }
 
-        /* Player Area (takes rest of the screen horizontally) */
+        /* Player Area */
         .player-area {
             flex: 1;
             position: relative;
@@ -226,11 +230,17 @@
         video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: contain; /* Default: fit */
             background-color: #000;
         }
 
-        /* Top overlay: current channel + menu button */
+        /* Video Object-Fit Classes (Aspect Ratio Controls) */
+        .video-fit-contain { object-fit: contain !important; } /* Fit */
+        .video-fit-cover { object-fit: cover !important; }   /* Crop */
+        .video-fit-fill { object-fit: fill !important; }     /* Stretch */
+
+
+        /* Top overlay: current channel + menu button + ratio controls */
         .player-overlay-top {
             position: absolute;
             top: 0;
@@ -245,23 +255,54 @@
             pointer-events: none;
         }
 
-        .player-info-group {
+        .controls-group {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        /* Aspect Ratio Controls Styling */
+        .aspect-ratio-controls button {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid #475569;
+            color: #E5E7EB;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+            pointer-events: auto;
+            min-width: 65px;
+        }
+
+        .aspect-ratio-controls button:hover {
+            background: rgba(30, 64, 175, 0.95);
+        }
+
+        .aspect-ratio-controls button.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5);
+            color: #050509;
+            font-weight: 600;
+        }
+
+        .player-info-group {
             pointer-events: auto;
         }
 
         .current-channel-name {
             color: #FFFFFF;
-            font-weight: 600;
-            font-size: 1.1em;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            font-weight: 700;
+            font-size: 1.3em;
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.9);
         }
 
         .current-channel-status {
-            font-size: 0.8em;
-            color: #D1D5DB;
+            font-size: 0.85em;
+            color: #BCC2CC;
         }
 
         .toggle-sidebar-btn {
@@ -283,6 +324,7 @@
 
         .toggle-sidebar-btn:hover {
             background: rgba(30, 64, 175, 0.95);
+            border-color: #A5B4FC;
             box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.55);
         }
 
@@ -310,7 +352,7 @@
         }
 
         @keyframes spin {
-            0%   { transform: rotate(0deg); }
+            0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
@@ -329,51 +371,12 @@
             align-items: center;
             gap: 10px;
             z-index: 15;
+            pointer-events: auto;
         }
 
-        .error-banner button {
-            background: #F97373;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 0.8em;
-            color: #1F2937;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* Shaka UI tweaks: ensure fullscreen button visible */
-        .shaka-controls-button-panel {
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-        }
-
+        /* Shaka UI tweaks */
         .shaka-bottom-controls {
             padding: 0 2em 0.8em;
-        }
-
-        .shaka-controls-button-panel > * {
-            margin-inline: 0.25rem;
-        }
-
-        .shaka-fullscreen-button {
-            outline: none !important;
-        }
-
-        .shaka-fullscreen-button:focus-visible,
-        .shaka-play-button:focus-visible,
-        .shaka-small-play-button:focus-visible {
-            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.8);
-        }
-
-        .shaka-play-button {
-            transform: scale(1.2);
-        }
-
-        /* Hide internal spinner (use custom one) */
-        .shaka-spinner-container,
-        .shaka-spinner,
-        .shaka-spinner-svg {
-            display: none !important;
         }
 
         /* Mobile adjustments: sidebar as drawer */
@@ -384,17 +387,37 @@
                 top: 0;
                 bottom: 0;
                 left: 0;
+                width: 75%; /* More adaptive width on mobile */
+                max-width: 400px;
                 transform: translateX(-100%);
                 transition: transform 0.25s ease-out;
-                box-shadow: 14px 0 30px rgba(0, 0, 0, 0.6);
+                box-shadow: 14px 0 30px rgba(0, 0, 0, 0.8);
             }
 
             .channels-sidebar.open {
                 transform: translateX(0);
             }
+        }
 
-            .player-area {
-                flex: 1;
+        /* Hide ratio controls on smaller tablets/vertical phones */
+        @media (max-width: 768px) {
+            .aspect-ratio-controls {
+                display: none;
+            }
+        }
+
+        /* Smaller mobile adjustments */
+        @media (max-width: 480px) {
+            .sidebar-header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .sidebar-search {
+                margin-top: 10px;
+            }
+            .toggle-sidebar-btn {
+                padding: 7px 14px;
+                font-size: 0.85em;
             }
         }
     </style>
@@ -405,13 +428,15 @@
         <!-- Channels Sidebar -->
         <aside class="channels-sidebar" id="channels-sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-header-left">
-                    <div class="sidebar-title">Channels</div>
-                    <div class="sidebar-subtitle">Use remote arrows / D‑pad</div>
+                <div class="sidebar-header-top">
+                    <div class="sidebar-header-left">
+                        <div class="sidebar-title">Channel Hub</div>
+                        <div class="sidebar-subtitle">Live Streams (D-pad optimized)</div>
+                    </div>
                 </div>
                 <div class="sidebar-search">
                     <input type="search" id="channel-search"
-                           placeholder="Search"
+                           placeholder="Search channels (Ctrl/Cmd+K)"
                            autocomplete="off">
                 </div>
             </div>
@@ -435,12 +460,22 @@
                             Use the channel list on the left
                         </div>
                     </div>
-                    <button class="toggle-sidebar-btn" id="toggle-sidebar">
-                        <span>☰ Channels</span>
-                    </button>
+                    
+                    <div class="controls-group">
+                        <!-- Aspect Ratio Controls -->
+                        <div class="aspect-ratio-controls" id="aspect-ratio-controls">
+                            <button data-fit="contain" class="active">Fit</button>
+                            <button data-fit="cover">Crop</button>
+                            <button data-fit="fill">Stretch</button>
+                        </div>
+
+                        <button class="toggle-sidebar-btn" id="toggle-sidebar">
+                            <span>☰ Channels</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Shaka Player container (fullscreen when requested) -->
+                <!-- Shaka Player container -->
                 <div class="shaka-video-container" data-shaka-player-container>
                     <video autoplay playsinline preload="metadata"
                            data-shaka-player></video>
@@ -465,6 +500,7 @@
     let player = null;
     let video = null;
     let ui = null;
+    let currentVideoFit = 'contain';
 
     // DOM
     const channelSearchInput = document.getElementById("channel-search");
@@ -476,6 +512,8 @@
     const errorBanner = document.getElementById("error-banner");
     const errorText = document.getElementById("error-text");
     const errorRetry = document.getElementById("error-retry");
+    const aspectRatioControls = document.getElementById('aspect-ratio-controls');
+
 
     const DEFAULT_HEADERS = {
         Referer: "https://www.jiotv.com/",
@@ -503,6 +541,9 @@
         }
     };
 
+    /**
+     * Toggles the visibility of the error banner.
+     */
     function showError(message) {
         errorText.textContent = message;
         errorBanner.style.display = "flex";
@@ -512,6 +553,9 @@
         errorBanner.style.display = "none";
     }
 
+    /**
+     * Shows a loading state in the channel list.
+     */
     function showLoading() {
         channelGrid.innerHTML = `
             <div class="loading">
@@ -522,11 +566,17 @@
         hideError();
     }
 
+    /**
+     * Filters channels based on the search term and re-renders the list.
+     */
     function handleSearch(searchTerm) {
         currentSearchTerm = searchTerm.toLowerCase().trim();
         renderChannels();
     }
 
+    /**
+     * Renders channel cards in the sidebar.
+     */
     function renderChannels() {
         const filteredChannels =
             currentSearchTerm.length > 0
@@ -548,7 +598,7 @@
         const sectionLabel = document.createElement("div");
         sectionLabel.className = "channel-section-label";
         sectionLabel.textContent =
-            currentSearchTerm.length > 0 ? "Search results" : "All channels";
+            currentSearchTerm.length > 0 ? "Search Results" : "All Channels";
         channelGrid.appendChild(sectionLabel);
 
         filteredChannels.forEach((channel, index) => {
@@ -563,7 +613,7 @@
             }
 
             const placeholderUrl =
-                "https://placehold.co/300x100/050814/9CA3AF?text=" +
+                "https://placehold.co/300x100/10131D/9CA3AF?text=" +
                 encodeURIComponent(channel.title.substring(0, 16));
 
             card.innerHTML = `
@@ -591,6 +641,9 @@
         });
     }
 
+    /**
+     * Attempts to play the video with or without sound (muted autoplay fallback).
+     */
     async function attemptAutoplay() {
         if (!video) return false;
         try {
@@ -599,15 +652,20 @@
             return true;
         } catch (_) {
             try {
+                // If unmuted failed, try muted
                 video.muted = true;
                 await video.play();
                 return true;
             } catch (e) {
+                console.warn("Autoplay failed even with mute:", e);
                 return false;
             }
         }
     }
 
+    /**
+     * Attempts to enter fullscreen mode.
+     */
     async function enterFullscreen() {
         const container = document.querySelector(".shaka-video-container");
         if (!container) return;
@@ -625,11 +683,48 @@
         }
     }
 
+    /**
+     * Sets the video element's object-fit property via CSS classes.
+     */
+    function setVideoFit(fit) {
+        if (!video) return;
+        const fitClass = `video-fit-${fit}`;
+        // Remove all existing fit classes
+        video.className = video.className.replace(/video-fit-\w+/g, '').trim();
+        video.classList.add(fitClass);
+        currentVideoFit = fit;
+
+        document.querySelectorAll('#aspect-ratio-controls button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`button[data-fit="${fit}"]`).classList.add('active');
+    }
+
+    /**
+     * Initializes the aspect ratio control buttons.
+     */
+    function initAspectRatioControls() {
+        // Set default fit on video element
+        setVideoFit('contain');
+
+        aspectRatioControls.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (button && button.dataset.fit) {
+                setVideoFit(button.dataset.fit);
+            }
+        });
+    }
+
+
+    /**
+     * Loads and plays the specified channel stream using Shaka Player.
+     */
     async function playChannel(channel) {
         if (!player) return;
 
         hideError();
 
+        // Deactivate all channel cards
         document.querySelectorAll(".channel-card").forEach((c) =>
             c.classList.remove("active")
         );
@@ -637,15 +732,16 @@
         currentChannelName.textContent = channel.title;
         currentChannelStatus.textContent = "Loading live stream…";
 
-        // Highlight selected
+        // Highlight selected card
         const cards = document.querySelectorAll(".channel-card");
         cards.forEach((card) => {
-            const t = card.querySelector(".channel-title");
-            if (t && t.textContent === channel.title) {
+            if (card.getAttribute("data-channel-id") === channel.id) {
                 card.classList.add("active");
+                card.focus(); // Set focus for D-pad users
             }
         });
 
+        // Close sidebar on mobile
         if (window.innerWidth <= 900) {
             channelsSidebar.classList.remove("open");
         }
@@ -653,7 +749,7 @@
         try {
             await player.unload();
 
-            // DRM clear-keys if present
+            // Handle DRM clear-keys if present
             if (channel.key && channel.key.includes(":")) {
                 const [keyId, keyValue] = channel.key.split(":");
                 player.configure({
@@ -668,7 +764,7 @@
                 player.configure({drm: {clearKeys: {}}});
             }
 
-            // Networking filters: attach headers / cookies
+            // Networking filters: attach headers / cookies (Crucial for the stream)
             const net = player.getNetworkingEngine();
             net.clearAllRequestFilters();
             net.registerRequestFilter((type, request) => {
@@ -694,16 +790,18 @@
 
             await player.load(channel.url);
             await attemptAutoplay();
-            currentChannelStatus.textContent = "Live • Tap ⛶ for fullscreen";
-            // Auto fullscreen on first play / Android TV feel
+            currentChannelStatus.textContent = "Live • Watching Now";
             await enterFullscreen();
         } catch (error) {
             console.error("Playback error:", error);
             currentChannelStatus.textContent = "Error loading channel";
-            showError(`Failed to play ${channel.title}: ${error.message}`);
+            showError(`Failed to play ${channel.title}. Please check the console.`);
         }
     }
 
+    /**
+     * Initializes Shaka Player and UI.
+     */
     async function initPlayer() {
         shaka.polyfill.installAll();
 
@@ -720,6 +818,7 @@
         const container = document.querySelector(".shaka-video-container");
         ui = new shaka.ui.Overlay(player, container, video);
 
+        // Configure Shaka UI controls
         ui.configure({
             controlPanelElements: [
                 "play_pause",
@@ -728,15 +827,15 @@
                 "volume",
                 "spacer",
                 "quality",
-                "fullscreen"    // fullscreen button enabled
+                "fullscreen"
             ],
             addSeekBar: true,
             addBigPlayButton: true,
-            volumeBarColors: {base: "#4CAF50", level: "#4CAF50"},
+            volumeBarColors: {base: "#475569", level: "#4CAF50"},
             seekBarColors: {
                 base: "#6B7280",
                 buffered: "#F59E0B",
-                played: "#FFEB3B"
+                played: "#4CAF50"
             }
         });
 
@@ -751,6 +850,9 @@
         video.volume = 0.9;
     }
 
+    /**
+     * Fetches the channel list from the external API.
+     */
     async function loadChannels() {
         showLoading();
         hideError();
@@ -776,6 +878,9 @@
         }
     }
 
+    /**
+     * Initializes keyboard navigation, especially for TV-like D-pad usage.
+     */
     function initKeyboardNavigation() {
         document.addEventListener("keydown", (e) => {
             // ESC closes sidebar on small screens
@@ -803,12 +908,17 @@
                 if (next) {
                     e.preventDefault();
                     next.focus();
+                    next.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
         });
     }
 
+    /**
+     * Main application initialization function.
+     */
     async function initApp() {
+        initAspectRatioControls();
         await initPlayer();
         await loadChannels();
         initKeyboardNavigation();
@@ -822,8 +932,13 @@
     toggleSidebarBtn.addEventListener("click", () => {
         channelsSidebar.classList.toggle("open");
         if (channelsSidebar.classList.contains("open")) {
-            const firstCard = channelsSidebar.querySelector(".channel-card");
-            if (firstCard) firstCard.focus();
+            // On opening, focus the active or first channel card
+            const activeCard = channelsSidebar.querySelector(".channel-card.active");
+            const target = activeCard || channelsSidebar.querySelector(".channel-card");
+            if (target) {
+                target.focus();
+                target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
     });
 
