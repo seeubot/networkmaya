@@ -1,21 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Channel Hub - Live TV Player</title>
 
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Shaka Player Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"
-            crossorigin="anonymous"></script>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css"
-          crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
 
     <style>
         /* Base Styles */
@@ -58,7 +53,7 @@
 
         /* Channels Sidebar */
         .channels-sidebar {
-            width: 380px; /* Slightly wider */
+            width: 380px;
             max-width: 400px;
             min-width: 280px;
             background: rgba(8, 8, 12, 0.96);
@@ -67,7 +62,7 @@
             flex-direction: column;
             overflow: hidden;
             backdrop-filter: blur(20px);
-            flex-shrink: 0; /* Prevents sidebar from shrinking unexpectedly */
+            flex-shrink: 0;
         }
 
         .sidebar-header {
@@ -98,7 +93,6 @@
             margin-top: 4px;
         }
 
-        /* Search Bar Design Improvement */
         .sidebar-search {
             flex-grow: 1;
         }
@@ -132,6 +126,23 @@
             overflow-y: auto;
         }
 
+        .channel-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .channel-grid::-webkit-scrollbar-track {
+            background: #10131D;
+        }
+
+        .channel-grid::-webkit-scrollbar-thumb {
+            background: #3B4255;
+            border-radius: 4px;
+        }
+
+        .channel-grid::-webkit-scrollbar-thumb:hover {
+            background: #4CAF50;
+        }
+
         .channel-section-label {
             font-size: 0.8em;
             text-transform: uppercase;
@@ -160,7 +171,6 @@
             border-color: rgba(76, 175, 80, 0.5);
         }
 
-        /* Strong focus state for D-pad navigation */
         .channel-card:focus-visible {
             border-color: #FFEB3B;
             box-shadow: 0 0 0 3px rgba(255, 235, 59, 0.5), 0 0 10px rgba(255, 235, 59, 0.2);
@@ -190,6 +200,11 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        .channel-info {
+            flex: 1;
+            min-width: 0;
         }
 
         .channel-title {
@@ -230,17 +245,16 @@
         video {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Default: fit */
+            object-fit: contain;
             background-color: #000;
         }
 
-        /* Video Object-Fit Classes (Aspect Ratio Controls) */
-        .video-fit-contain { object-fit: contain !important; } /* Fit */
-        .video-fit-cover { object-fit: cover !important; }   /* Crop */
-        .video-fit-fill { object-fit: fill !important; }     /* Stretch */
+        /* Video Object-Fit Classes */
+        .video-fit-contain { object-fit: contain !important; }
+        .video-fit-cover { object-fit: cover !important; }
+        .video-fit-fill { object-fit: fill !important; }
 
-
-        /* Top overlay: current channel + menu button + ratio controls */
+        /* Top overlay */
         .player-overlay-top {
             position: absolute;
             top: 0;
@@ -253,6 +267,12 @@
             justify-content: space-between;
             align-items: center;
             pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .player-overlay-top.hidden {
+            opacity: 0;
         }
 
         .controls-group {
@@ -262,7 +282,6 @@
             pointer-events: auto;
         }
 
-        /* Aspect Ratio Controls Styling */
         .aspect-ratio-controls button {
             background: rgba(15, 23, 42, 0.75);
             border: 1px solid #475569;
@@ -374,12 +393,28 @@
             pointer-events: auto;
         }
 
+        .error-retry-btn {
+            background: rgba(254, 202, 202, 0.2);
+            border: 1px solid #FECACA;
+            color: #FECACA;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .error-retry-btn:hover {
+            background: rgba(254, 202, 202, 0.3);
+        }
+
         /* Shaka UI tweaks */
         .shaka-bottom-controls {
             padding: 0 2em 0.8em;
         }
 
-        /* Mobile adjustments: sidebar as drawer */
+        /* Mobile adjustments */
         @media (max-width: 900px) {
             .channels-sidebar {
                 position: absolute;
@@ -387,7 +422,7 @@
                 top: 0;
                 bottom: 0;
                 left: 0;
-                width: 75%; /* More adaptive width on mobile */
+                width: 75%;
                 max-width: 400px;
                 transform: translateX(-100%);
                 transition: transform 0.25s ease-out;
@@ -399,25 +434,33 @@
             }
         }
 
-        /* Hide ratio controls on smaller tablets/vertical phones */
         @media (max-width: 768px) {
             .aspect-ratio-controls {
                 display: none;
             }
+            
+            .current-channel-name {
+                font-size: 1.1em;
+            }
         }
 
-        /* Smaller mobile adjustments */
         @media (max-width: 480px) {
             .sidebar-header-top {
                 flex-direction: column;
                 align-items: flex-start;
             }
+            
             .sidebar-search {
                 margin-top: 10px;
             }
+            
             .toggle-sidebar-btn {
                 padding: 7px 14px;
                 font-size: 0.85em;
+            }
+
+            .player-overlay-top {
+                padding: 10px 14px 8px;
             }
         }
     </style>
@@ -451,7 +494,7 @@
         <!-- Player Area -->
         <section class="player-area">
             <div class="player-frame">
-                <div class="player-overlay-top">
+                <div class="player-overlay-top" id="player-overlay-top">
                     <div class="player-info-group">
                         <div class="current-channel-name" id="current-channel-name">
                             Select a channel
@@ -464,9 +507,9 @@
                     <div class="controls-group">
                         <!-- Aspect Ratio Controls -->
                         <div class="aspect-ratio-controls" id="aspect-ratio-controls">
-                            <button data-fit="contain" class="active">Fit</button>
-                            <button data-fit="cover">Crop</button>
-                            <button data-fit="fill">Stretch</button>
+                            <button data-fit="contain" class="active" title="Fit to screen">Fit</button>
+                            <button data-fit="cover" title="Fill screen (crop)">Crop</button>
+                            <button data-fit="fill" title="Stretch to fill">Stretch</button>
                         </div>
 
                         <button class="toggle-sidebar-btn" id="toggle-sidebar">
@@ -484,474 +527,13 @@
                 <!-- Error banner -->
                 <div id="error-banner" class="error-banner" style="display:none;">
                     <span id="error-text">Playback error.</span>
-                    <button id="error-retry">Retry</button>
+                    <button id="error-retry" class="error-retry-btn">Retry</button>
                 </div>
             </div>
         </section>
     </div>
 </div>
 
-<script>
-    // Configuration
-    const API_URL = "https://static-crane-seeutech-17dd4df3.koyeb.app/api/channels";
-    let allChannels = [];
-    let currentSearchTerm = "";
-    let currentChannel = null;
-    let player = null;
-    let video = null;
-    let ui = null;
-    let currentVideoFit = 'contain';
-
-    // DOM
-    const channelSearchInput = document.getElementById("channel-search");
-    const channelGrid = document.getElementById("channel-grid");
-    const channelsSidebar = document.getElementById("channels-sidebar");
-    const toggleSidebarBtn = document.getElementById("toggle-sidebar");
-    const currentChannelName = document.getElementById("current-channel-name");
-    const currentChannelStatus = document.getElementById("current-channel-status");
-    const errorBanner = document.getElementById("error-banner");
-    const errorText = document.getElementById("error-text");
-    const errorRetry = document.getElementById("error-retry");
-    const aspectRatioControls = document.getElementById('aspect-ratio-controls');
-
-
-    const DEFAULT_HEADERS = {
-        Referer: "https://www.jiotv.com/",
-        "User-Agent": "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6"
-    };
-
-    const PLAYER_CONFIG = {
-        streaming: {
-            lowLatencyMode: true,
-            bufferingGoal: 10,
-            rebufferingGoal: 2,
-            bufferBehind: 10,
-            retryParameters: {
-                timeout: 10000,
-                maxAttempts: 3,
-                baseDelay: 1000,
-                backoffFactor: 2
-            }
-        },
-        manifest: {
-            retryParameters: {
-                timeout: 8000,
-                maxAttempts: 2
-            }
-        }
-    };
-
-    /**
-     * Toggles the visibility of the error banner.
-     */
-    function showError(message) {
-        errorText.textContent = message;
-        errorBanner.style.display = "flex";
-    }
-
-    function hideError() {
-        errorBanner.style.display = "none";
-    }
-
-    /**
-     * Shows a loading state in the channel list.
-     */
-    function showLoading() {
-        channelGrid.innerHTML = `
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>Loading channels...</p>
-            </div>
-        `;
-        hideError();
-    }
-
-    /**
-     * Filters channels based on the search term and re-renders the list.
-     */
-    function handleSearch(searchTerm) {
-        currentSearchTerm = searchTerm.toLowerCase().trim();
-        renderChannels();
-    }
-
-    /**
-     * Renders channel cards in the sidebar.
-     */
-    function renderChannels() {
-        const filteredChannels =
-            currentSearchTerm.length > 0
-                ? allChannels.filter((c) =>
-                    c.title.toLowerCase().includes(currentSearchTerm)
-                )
-                : allChannels;
-
-        if (!filteredChannels.length) {
-            channelGrid.innerHTML = `
-                <div class="loading">
-                    <p>No channels found for "${currentSearchTerm}".</p>
-                </div>
-            `;
-            return;
-        }
-
-        channelGrid.innerHTML = "";
-        const sectionLabel = document.createElement("div");
-        sectionLabel.className = "channel-section-label";
-        sectionLabel.textContent =
-            currentSearchTerm.length > 0 ? "Search Results" : "All Channels";
-        channelGrid.appendChild(sectionLabel);
-
-        filteredChannels.forEach((channel, index) => {
-            const card = document.createElement("div");
-            card.className = "channel-card";
-            card.tabIndex = 0;
-            card.setAttribute("data-channel-id", channel.id);
-            card.setAttribute("data-index", index.toString());
-
-            if (currentChannel && currentChannel.id === channel.id) {
-                card.classList.add("active");
-            }
-
-            const placeholderUrl =
-                "https://placehold.co/300x100/10131D/9CA3AF?text=" +
-                encodeURIComponent(channel.title.substring(0, 16));
-
-            card.innerHTML = `
-                <div class="channel-logo-wrapper">
-                    <img src="${channel.logo || placeholderUrl}"
-                         alt="${channel.title}"
-                         class="channel-logo"
-                         onerror="this.src='${placeholderUrl}'">
-                </div>
-                <div class="channel-info">
-                    <div class="channel-title">${channel.title}</div>
-                    <div class="channel-meta">Live • HD</div>
-                </div>
-            `;
-
-            card.addEventListener("click", () => playChannel(channel));
-            card.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    playChannel(channel);
-                }
-            });
-
-            channelGrid.appendChild(card);
-        });
-    }
-
-    /**
-     * Attempts to play the video with or without sound (muted autoplay fallback).
-     */
-    async function attemptAutoplay() {
-        if (!video) return false;
-        try {
-            video.muted = false;
-            await video.play();
-            return true;
-        } catch (_) {
-            try {
-                // If unmuted failed, try muted
-                video.muted = true;
-                await video.play();
-                return true;
-            } catch (e) {
-                console.warn("Autoplay failed even with mute:", e);
-                return false;
-            }
-        }
-    }
-
-    /**
-     * Attempts to enter fullscreen mode.
-     */
-    async function enterFullscreen() {
-        const container = document.querySelector(".shaka-video-container");
-        if (!container) return;
-        try {
-            const fsElement =
-                container.requestFullscreen ||
-                container.webkitRequestFullscreen ||
-                container.mozRequestFullScreen ||
-                container.msRequestFullscreen;
-            if (fsElement) {
-                fsElement.call(container);
-            }
-        } catch (e) {
-            console.warn("Fullscreen request failed:", e);
-        }
-    }
-
-    /**
-     * Sets the video element's object-fit property via CSS classes.
-     */
-    function setVideoFit(fit) {
-        if (!video) return;
-        const fitClass = `video-fit-${fit}`;
-        // Remove all existing fit classes
-        video.className = video.className.replace(/video-fit-\w+/g, '').trim();
-        video.classList.add(fitClass);
-        currentVideoFit = fit;
-
-        document.querySelectorAll('#aspect-ratio-controls button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`button[data-fit="${fit}"]`).classList.add('active');
-    }
-
-    /**
-     * Initializes the aspect ratio control buttons.
-     */
-    function initAspectRatioControls() {
-        // Set default fit on video element
-        setVideoFit('contain');
-
-        aspectRatioControls.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (button && button.dataset.fit) {
-                setVideoFit(button.dataset.fit);
-            }
-        });
-    }
-
-
-    /**
-     * Loads and plays the specified channel stream using Shaka Player.
-     */
-    async function playChannel(channel) {
-        if (!player) return;
-
-        hideError();
-
-        // Deactivate all channel cards
-        document.querySelectorAll(".channel-card").forEach((c) =>
-            c.classList.remove("active")
-        );
-        currentChannel = channel;
-        currentChannelName.textContent = channel.title;
-        currentChannelStatus.textContent = "Loading live stream…";
-
-        // Highlight selected card
-        const cards = document.querySelectorAll(".channel-card");
-        cards.forEach((card) => {
-            if (card.getAttribute("data-channel-id") === channel.id) {
-                card.classList.add("active");
-                card.focus(); // Set focus for D-pad users
-            }
-        });
-
-        // Close sidebar on mobile
-        if (window.innerWidth <= 900) {
-            channelsSidebar.classList.remove("open");
-        }
-
-        try {
-            await player.unload();
-
-            // Handle DRM clear-keys if present
-            if (channel.key && channel.key.includes(":")) {
-                const [keyId, keyValue] = channel.key.split(":");
-                player.configure({
-                    drm: {
-                        clearKeys: {
-                            [keyId]: keyValue
-                        }
-                    }
-                });
-            } else {
-                // Reset DRM if not used for this channel
-                player.configure({drm: {clearKeys: {}}});
-            }
-
-            // Networking filters: attach headers / cookies (Crucial for the stream)
-            const net = player.getNetworkingEngine();
-            net.clearAllRequestFilters();
-            net.registerRequestFilter((type, request) => {
-                request.headers["Referer"] = DEFAULT_HEADERS.Referer;
-                request.headers["User-Agent"] = DEFAULT_HEADERS["User-Agent"];
-
-                if (channel.cookie) {
-                    request.headers["Cookie"] = channel.cookie;
-                }
-
-                if (
-                    channel.cookie &&
-                    (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-                        type === shaka.net.NetworkingEngine.RequestType.SEGMENT)
-                ) {
-                    const hdneaMatch = channel.cookie.match(/__hdnea__=[^;]+/);
-                    if (hdneaMatch && !request.uris[0].includes("__hdnea__=")) {
-                        const sep = request.uris[0].includes("?") ? "&" : "?";
-                        request.uris[0] += sep + hdneaMatch[0];
-                    }
-                }
-            });
-
-            await player.load(channel.url);
-            await attemptAutoplay();
-            currentChannelStatus.textContent = "Live • Watching Now";
-            await enterFullscreen();
-        } catch (error) {
-            console.error("Playback error:", error);
-            currentChannelStatus.textContent = "Error loading channel";
-            showError(`Failed to play ${channel.title}. Please check the console.`);
-        }
-    }
-
-    /**
-     * Initializes Shaka Player and UI.
-     */
-    async function initPlayer() {
-        shaka.polyfill.installAll();
-
-        if (!shaka.Player.isBrowserSupported()) {
-            showError("Your browser is not supported for video playback.");
-            return;
-        }
-
-        video = document.querySelector("video");
-        player = new shaka.Player();
-
-        await player.attach(video);
-
-        const container = document.querySelector(".shaka-video-container");
-        ui = new shaka.ui.Overlay(player, container, video);
-
-        // Configure Shaka UI controls
-        ui.configure({
-            controlPanelElements: [
-                "play_pause",
-                "time_and_duration",
-                "mute",
-                "volume",
-                "spacer",
-                "quality",
-                "fullscreen"
-            ],
-            addSeekBar: true,
-            addBigPlayButton: true,
-            volumeBarColors: {base: "#475569", level: "#4CAF50"},
-            seekBarColors: {
-                base: "#6B7280",
-                buffered: "#F59E0B",
-                played: "#4CAF50"
-            }
-        });
-
-        player.configure(PLAYER_CONFIG);
-
-        player.addEventListener("error", (event) => {
-            console.error("Player error:", event.detail);
-            showError(`Playback error: ${event.detail.message}`);
-            currentChannelStatus.textContent = "Playback error";
-        });
-
-        video.volume = 0.9;
-    }
-
-    /**
-     * Fetches the channel list from the external API.
-     */
-    async function loadChannels() {
-        showLoading();
-        hideError();
-        try {
-            const response = await fetch(API_URL, {cache: "no-store"});
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            const data = await response.json();
-            if (data.success && Array.isArray(data.data)) {
-                allChannels = data.data;
-                renderChannels();
-                if (allChannels.length > 0) {
-                    // Auto-play first channel
-                    playChannel(allChannels[0]);
-                }
-            } else {
-                throw new Error("Invalid channel response format");
-            }
-        } catch (e) {
-            console.error("Failed to load channels:", e);
-            showError(`Failed to load channels: ${e.message}`);
-        }
-    }
-
-    /**
-     * Initializes keyboard navigation, especially for TV-like D-pad usage.
-     */
-    function initKeyboardNavigation() {
-        document.addEventListener("keydown", (e) => {
-            // ESC closes sidebar on small screens
-            if (e.key === "Escape") {
-                channelsSidebar.classList.remove("open");
-            }
-
-            // Ctrl/Cmd+K focuses search
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-                e.preventDefault();
-                channelSearchInput.focus();
-            }
-
-            // Simple vertical D-pad navigation in channel list
-            if (
-                (e.key === "ArrowDown" || e.key === "ArrowUp") &&
-                document.activeElement.classList.contains("channel-card")
-            ) {
-                const current = document.activeElement;
-                const index = parseInt(current.getAttribute("data-index") || "0", 10);
-                const nextIndex = e.key === "ArrowDown" ? index + 1 : index - 1;
-                const next = channelGrid.querySelector(
-                    `.channel-card[data-index="${nextIndex}"]`
-                );
-                if (next) {
-                    e.preventDefault();
-                    next.focus();
-                    next.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }
-        });
-    }
-
-    /**
-     * Main application initialization function.
-     */
-    async function initApp() {
-        initAspectRatioControls();
-        await initPlayer();
-        await loadChannels();
-        initKeyboardNavigation();
-    }
-
-    // Event listeners
-    channelSearchInput.addEventListener("input", (e) =>
-        handleSearch(e.target.value)
-    );
-
-    toggleSidebarBtn.addEventListener("click", () => {
-        channelsSidebar.classList.toggle("open");
-        if (channelsSidebar.classList.contains("open")) {
-            // On opening, focus the active or first channel card
-            const activeCard = channelsSidebar.querySelector(".channel-card.active");
-            const target = activeCard || channelsSidebar.querySelector(".channel-card");
-            if (target) {
-                target.focus();
-                target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-    });
-
-    errorRetry.addEventListener("click", () => {
-        hideError();
-        if (currentChannel) {
-            playChannel(currentChannel);
-        } else {
-            loadChannels();
-        }
-    });
-
-    window.addEventListener("DOMContentLoaded", initApp);
-</script>
+<script src="script.js"></script>
 </body>
 </html>
