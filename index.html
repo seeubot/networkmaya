@@ -120,6 +120,16 @@
             background: #161a29;
         }
 
+        /* Ad Container in Sidebar */
+        .sidebar-ad-container {
+            padding: 12px;
+            text-align: center;
+            border-top: 1px solid #262b3b;
+            margin-top: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
         .channel-grid {
             padding: 16px 12px;
             flex: 1;
@@ -228,6 +238,19 @@
             position: relative;
             background: #000;
             display: flex;
+            flex-direction: column;
+        }
+
+        /* Ad Banner Above Player */
+        .player-top-ad {
+            background: #000;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #262b3b;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .player-frame {
@@ -409,6 +432,19 @@
             background: rgba(254, 202, 202, 0.3);
         }
 
+        /* Bottom Ad Bar */
+        .bottom-ad-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 10px;
+            text-align: center;
+            z-index: 1000;
+            border-top: 1px solid #262b3b;
+        }
+
         /* Shaka UI tweaks */
         .shaka-bottom-controls {
             padding: 0 2em 0.8em;
@@ -432,6 +468,10 @@
             .channels-sidebar.open {
                 transform: translateX(0);
             }
+
+            .sidebar-ad-container {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
@@ -441,6 +481,11 @@
             
             .current-channel-name {
                 font-size: 1.1em;
+            }
+
+            .player-top-ad {
+                padding: 5px;
+                min-height: 70px;
             }
         }
 
@@ -462,6 +507,14 @@
             .player-overlay-top {
                 padding: 10px 14px 8px;
             }
+
+            .player-top-ad {
+                display: none;
+            }
+
+            .bottom-ad-bar {
+                padding: 5px;
+            }
         }
     </style>
 </head>
@@ -482,6 +535,20 @@
                            placeholder="Search channels (Ctrl/Cmd+K)"
                            autocomplete="off">
                 </div>
+
+                <!-- Ad in Sidebar -->
+                <div class="sidebar-ad-container">
+                    <script type="text/javascript">
+                        atOptions = {
+                            'key' : 'e47e23c42180f22a6878eac897af183c',
+                            'format' : 'iframe',
+                            'height' : 60,
+                            'width' : 468,
+                            'params' : {}
+                        };
+                    </script>
+                    <script type="text/javascript" src="https://tumbleddear.com/e47e23c42180f22a6878eac897af183c/invoke.js"></script>
+                </div>
             </div>
             <div class="channel-grid" id="channel-grid">
                 <div class="loading">
@@ -493,6 +560,20 @@
 
         <!-- Player Area -->
         <section class="player-area">
+            <!-- Ad Banner Above Player -->
+            <div class="player-top-ad">
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : 'e47e23c42180f22a6878eac897af183c',
+                        'format' : 'iframe',
+                        'height' : 60,
+                        'width' : 468,
+                        'params' : {}
+                    };
+                </script>
+                <script type="text/javascript" src="https://tumbleddear.com/e47e23c42180f22a6878eac897af183c/invoke.js"></script>
+            </div>
+
             <div class="player-frame">
                 <div class="player-overlay-top" id="player-overlay-top">
                     <div class="player-info-group">
@@ -532,6 +613,12 @@
             </div>
         </section>
     </div>
+</div>
+
+<!-- Bottom Ad Bar -->
+<div class="bottom-ad-bar">
+    <script async="async" data-cfasync="false" src="https://tumbleddear.com/c595af0c2cf00d3996d9f29998ede8ad/invoke.js"></script>
+    <div id="container-c595af0c2cf00d3996d9f29998ede8ad"></div>
 </div>
 
 <script src="script.js"></script>
