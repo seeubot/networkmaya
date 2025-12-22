@@ -804,12 +804,33 @@ function showPopunder() {
 function createBannerAd() {
     const adContainer = document.createElement('div');
     adContainer.className = 'ad-container';
-    adContainer.innerHTML = '<ins class="adsbygoogle" style="display:block" data-ad-format="fluid"></ins>';
     
-    // Create ad script
-    const script = document.createElement('script');
-    script.src = `https://staggermeaningless.com/${AD_CONFIG.bannerAd.key}/invoke.js`;
-    adContainer.appendChild(script);
+    // Create the ad wrapper
+    const adWrapper = document.createElement('div');
+    adWrapper.style.display = 'flex';
+    adWrapper.style.justifyContent = 'center';
+    adWrapper.style.alignItems = 'center';
+    adWrapper.style.minHeight = '60px';
+    
+    // Create atOptions script
+    const atOptionsScript = document.createElement('script');
+    atOptionsScript.textContent = `
+        atOptions = {
+            'key' : '${AD_CONFIG.bannerAd.key}',
+            'format' : 'iframe',
+            'height' : ${AD_CONFIG.bannerAd.height},
+            'width' : ${AD_CONFIG.bannerAd.width},
+            'params' : {}
+        };
+    `;
+    
+    // Create invoke script
+    const invokeScript = document.createElement('script');
+    invokeScript.src = `https://staggermeaningless.com/${AD_CONFIG.bannerAd.key}/invoke.js`;
+    
+    adWrapper.appendChild(atOptionsScript);
+    adWrapper.appendChild(invokeScript);
+    adContainer.appendChild(adWrapper);
     
     return adContainer;
 }
