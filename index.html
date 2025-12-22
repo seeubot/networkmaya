@@ -53,16 +53,20 @@
 
         /* Channels Sidebar */
         .channels-sidebar {
-            width: 380px;
-            max-width: 400px;
-            min-width: 280px;
+            width: 100%;
             background: rgba(8, 8, 12, 0.96);
-            border-right: 1px solid #262b3b;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             backdrop-filter: blur(20px);
-            flex-shrink: 0;
+            transition: width 0.3s ease;
+        }
+
+        .channels-sidebar.with-player {
+            width: 380px;
+            max-width: 400px;
+            min-width: 280px;
+            border-right: 1px solid #262b3b;
         }
 
         .sidebar-header {
@@ -118,20 +122,6 @@
             border-color: #4CAF50;
             box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
             background: #161a29;
-        }
-
-        /* Ad Container in Sidebar */
-        .sidebar-ad-container {
-            padding: 12px;
-            text-align: center;
-            border-top: 1px solid #262b3b;
-            margin-top: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 320px;
         }
 
         .channel-grid {
@@ -241,8 +231,12 @@
             flex: 1;
             position: relative;
             background: #000;
-            display: flex;
+            display: none;
             flex-direction: column;
+        }
+
+        .player-area.visible {
+            display: flex;
         }
 
         .player-frame {
@@ -367,24 +361,6 @@
             box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.8);
         }
 
-        /* Fullscreen Ad Overlay */
-        .fullscreen-ad-overlay {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 999999;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: none;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-        }
-
-        .fullscreen-ad-overlay.show {
-            display: block;
-        }
-
         /* Loading / Error */
         .loading {
             text-align: center;
@@ -449,7 +425,7 @@
 
         /* Mobile adjustments */
         @media (max-width: 900px) {
-            .channels-sidebar {
+            .channels-sidebar.with-player {
                 position: absolute;
                 z-index: 20;
                 top: 0;
@@ -462,12 +438,8 @@
                 box-shadow: 14px 0 30px rgba(0, 0, 0, 0.8);
             }
 
-            .channels-sidebar.open {
+            .channels-sidebar.with-player.open {
                 transform: translateX(0);
-            }
-
-            .sidebar-ad-container {
-                display: none;
             }
         }
 
@@ -478,11 +450,6 @@
             
             .current-channel-name {
                 font-size: 1.1em;
-            }
-
-            .fullscreen-ad-overlay {
-                top: 10px;
-                right: 10px;
             }
         }
 
@@ -504,10 +471,6 @@
             .player-overlay-top {
                 padding: 10px 14px 8px;
             }
-
-            .fullscreen-ad-overlay {
-                display: none !important;
-            }
         }
     </style>
 </head>
@@ -528,20 +491,6 @@
                            placeholder="Search channels (Ctrl/Cmd+K)"
                            autocomplete="off">
                 </div>
-
-                <!-- Ad in Sidebar (160x300) -->
-                <div class="sidebar-ad-container">
-                    <script type="text/javascript">
-                        atOptions = {
-                            'key' : '6d75cd21018c84a4bdf9aea1df892b75',
-                            'format' : 'iframe',
-                            'height' : 300,
-                            'width' : 160,
-                            'params' : {}
-                        };
-                    </script>
-                    <script type="text/javascript" src="https://tumbleddear.com/6d75cd21018c84a4bdf9aea1df892b75/invoke.js"></script>
-                </div>
             </div>
             <div class="channel-grid" id="channel-grid">
                 <div class="loading">
@@ -552,7 +501,7 @@
         </aside>
 
         <!-- Player Area -->
-        <section class="player-area">
+        <section class="player-area" id="player-area">
             <div class="player-frame">
                 <div class="player-overlay-top" id="player-overlay-top">
                     <div class="player-info-group">
@@ -594,54 +543,6 @@
     </div>
 </div>
 
-<!-- Fullscreen Ad Overlay (shows only in fullscreen mode) -->
-<div class="fullscreen-ad-overlay" id="fullscreen-ad-overlay">
-    <script type="text/javascript">
-        atOptions = {
-            'key' : '6d75cd21018c84a4bdf9aea1df892b75',
-            'format' : 'iframe',
-            'height' : 300,
-            'width' : 160,
-            'params' : {}
-        };
-    </script>
-    <script type="text/javascript" src="https://tumbleddear.com/6d75cd21018c84a4bdf9aea1df892b75/invoke.js"></script>
-</div>
-
-<!-- Native Banner Ad Script -->
-<script type="text/javascript" src="https://tumbleddear.com/26/86/49/268649e9ee7ecac1e31e814e44bd4f78.js"></script>
-
 <script src="script.js"></script>
-
-<!-- Fullscreen Ad Toggle Script -->
-<script>
-    // Show/hide ad overlay when entering/exiting fullscreen
-    document.addEventListener('fullscreenchange', function() {
-        const fullscreenAdOverlay = document.getElementById('fullscreen-ad-overlay');
-        if (document.fullscreenElement) {
-            fullscreenAdOverlay.classList.add('show');
-        } else {
-            fullscreenAdOverlay.classList.remove('show');
-        }
-    });
-
-    document.addEventListener('webkitfullscreenchange', function() {
-        const fullscreenAdOverlay = document.getElementById('fullscreen-ad-overlay');
-        if (document.webkitFullscreenElement) {
-            fullscreenAdOverlay.classList.add('show');
-        } else {
-            fullscreenAdOverlay.classList.remove('show');
-        }
-    });
-
-    document.addEventListener('mozfullscreenchange', function() {
-        const fullscreenAdOverlay = document.getElementById('fullscreen-ad-overlay');
-        if (document.mozFullScreenElement) {
-            fullscreenAdOverlay.classList.add('show');
-        } else {
-            fullscreenAdOverlay.classList.remove('show');
-        }
-    });
-</script>
 </body>
 </html>
