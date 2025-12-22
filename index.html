@@ -12,6 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
 
+    <!-- External JavaScript -->
+    <script src="script.js" defer></script>
+
     <style>
         /* Base Styles */
         * {
@@ -33,6 +36,7 @@
 
         body {
             display: flex;
+            position: relative;
         }
 
         /* Layout */
@@ -49,6 +53,237 @@
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* Full-Page Banner Ad */
+        .fullpage-ad {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            background: rgba(15, 18, 38, 0.98);
+            z-index: 1000;
+            display: none;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+            transform: translateY(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+        }
+
+        .fullpage-ad.visible {
+            transform: translateY(0);
+        }
+
+        .ad-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .ad-label {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.7em;
+            color: #9CA3AF;
+            background: rgba(30, 33, 56, 0.7);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        #ad-iframe-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .banner-ad-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            margin: 0 auto;
+            background: rgba(5, 8, 20, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .close-ad-btn {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            background: rgba(239, 68, 68, 0.8);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+
+        .close-ad-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: scale(1.1);
+        }
+
+        .ad-insertion-point {
+            grid-column: 1 / -1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .ad-insertion-point::after {
+            content: 'Ad Break';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(99, 102, 241, 0.2);
+            color: #A855F7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        /* Telegram Enforcement Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 20, 0.95);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(15, 18, 38, 0.98) 0%, rgba(10, 14, 39, 0.98) 100%);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            color: #FFFFFF;
+            font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-body {
+            padding: 32px 24px;
+            text-align: center;
+        }
+
+        .modal-body p {
+            color: #D1D5DB;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .telegram-join-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #0088CC 0%, #00A5E0 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            margin: 16px 0;
+            box-shadow: 0 8px 24px rgba(0, 136, 204, 0.4);
+        }
+
+        .telegram-join-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 136, 204, 0.6);
+        }
+
+        .modal-note {
+            font-size: 0.9em !important;
+            color: #9CA3AF !important;
+            margin-top: 20px !important;
+            font-style: italic;
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+            text-align: center;
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.6);
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
 
         /* Channels Sidebar */
@@ -208,19 +443,6 @@
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 14px;
             padding: 0 4px;
-        }
-
-        .ad-container {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100px;
-            background: rgba(15, 18, 38, 0.5);
-            border-radius: 12px;
-            border: 1px dashed rgba(99, 102, 241, 0.3);
-            margin: 8px 0;
-            overflow: hidden;
         }
 
         .channel-card {
@@ -544,6 +766,10 @@
             .channel-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             }
+
+            .fullpage-ad {
+                height: 70px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -559,6 +785,11 @@
 
             .sidebar-title {
                 font-size: 1.3em;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-width: 400px;
             }
         }
 
@@ -584,868 +815,108 @@
             .player-info-group {
                 max-width: 50%;
             }
+
+            .fullpage-ad {
+                height: 60px;
+            }
         }
     </style>
 </head>
 <body>
-<div class="app-container">
-    <div class="main-content">
-        <!-- Channels Sidebar -->
-        <aside class="channels-sidebar" id="channels-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-header-top">
-                    <div class="logo-section">
-                        <div class="logo-icon">IM</div>
-                        <div>
-                            <div class="sidebar-title">IMax TV</div>
-                            <div class="sidebar-subtitle">Live Streaming Platform</div>
+    <!-- AdBlock Detection Element (Hidden) -->
+    <div class="ad-box" style="position:fixed;top:0;left:0;width:1px;height:1px;z-index:99999;visibility:hidden;opacity:0;"></div>
+
+    <div class="app-container">
+        <!-- Full-Page Banner Ad -->
+        <div id="fullpage-ad" class="fullpage-ad" style="display: none;">
+            <div class="ad-content">
+                <span class="ad-label">Advertisement</span>
+                <div id="ad-iframe-container"></div>
+                <button class="close-ad-btn" id="close-ad-btn">✕</button>
+            </div>
+        </div>
+
+        <!-- Telegram Enforcement Modal -->
+        <div id="telegram-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚠️ Join Our Community</h2>
+                </div>
+                <div class="modal-body">
+                    <p>To continue streaming and support the platform, please join our official Telegram channel for updates and support.</p>
+                    <a href="https://t.me/+t9rJ42tcRJI2MDFl" target="_blank" class="telegram-join-btn">
+                        ✈️ Join Telegram Channel
+                    </a>
+                    <p class="modal-note">You will be redirected automatically upon clicking. Return to this page after joining.</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-continue-btn" class="modal-btn primary">I've Joined, Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Channels Sidebar -->
+            <aside class="channels-sidebar" id="channels-sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-header-top">
+                        <div class="logo-section">
+                            <div class="logo-icon">IM</div>
+                            <div>
+                                <div class="sidebar-title">IMax TV</div>
+                                <div class="sidebar-subtitle">Live Streaming Platform</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="sidebar-search">
-                    <span class="search-icon">🔍</span>
-                    <input type="search" id="channel-search"
-                           placeholder="Search channels..."
-                           autocomplete="off">
-                </div>
-            </div>
-            <div class="channel-grid-container" id="channel-grid-container">
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading channels...</p>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Player Area -->
-        <section class="player-area" id="player-area">
-            <div class="player-frame">
-                <div class="player-overlay-top" id="player-overlay-top">
-                    <div class="player-info-group">
-                        <div class="current-channel-name" id="current-channel-name">
-                            Select a channel
-                        </div>
-                        <div class="current-channel-status" id="current-channel-status">
-                            <span class="status-dot"></span>
-                            <span>Browse channels to start</span>
-                        </div>
+                    <div class="sidebar-search">
+                        <span class="search-icon">🔍</span>
+                        <input type="search" id="channel-search"
+                               placeholder="Search channels..."
+                               autocomplete="off">
                     </div>
-                    
-                    <button class="toggle-sidebar-btn" id="toggle-sidebar">
-                        <span>☰</span>
-                        <span>Channels</span>
-                    </button>
                 </div>
+                <div class="channel-grid-container" id="channel-grid-container">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading channels...</p>
+                    </div>
+                </div>
+            </aside>
 
-                <!-- Shaka Player container -->
-                <div class="shaka-video-container" data-shaka-player-container>
-                    <video autoplay playsinline preload="metadata"
-                           data-shaka-player></video>
-                </div>
+            <!-- Player Area -->
+            <section class="player-area" id="player-area">
+                <div class="player-frame">
+                    <div class="player-overlay-top" id="player-overlay-top">
+                        <div class="player-info-group">
+                            <div class="current-channel-name" id="current-channel-name">
+                                Select a channel
+                            </div>
+                            <div class="current-channel-status" id="current-channel-status">
+                                <span class="status-dot"></span>
+                                <span>Browse channels to start</span>
+                            </div>
+                        </div>
+                        
+                        <button class="toggle-sidebar-btn" id="toggle-sidebar">
+                            <span>☰</span>
+                            <span>Channels</span>
+                        </button>
+                    </div>
 
-                <!-- Error banner -->
-                <div id="error-banner" class="error-banner" style="display:none;">
-                    <span id="error-text">Playback error.</span>
-                    <button id="error-retry" class="error-retry-btn">Retry</button>
+                    <!-- Shaka Player container -->
+                    <div class="shaka-video-container" data-shaka-player-container>
+                        <video autoplay playsinline preload="metadata"
+                               data-shaka-player></video>
+                    </div>
+
+                    <!-- Error banner -->
+                    <div id="error-banner" class="error-banner" style="display:none;">
+                        <span id="error-text">Playback error.</span>
+                        <button id="error-retry" class="error-retry-btn">Retry</button>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
-</div>
-
-<script>
-/**
- * IMax TV - Live Streaming Platform
- * Enhanced grid layout with integrated advertising
- */
-
-// ============================================================================
-// API CONFIGURATION
-// ============================================================================
-const API_CONFIG = {
-    BASE_URL: "https://static-crane-seeutech-17dd4df3.koyeb.app",
-    ENDPOINTS: {
-        CHANNELS: "/api/channels",
-        STREAM_INFO: "/api/stream",
-    },
-    DEFAULT_HEADERS: {
-        Referer: "https://www.jiotv.com/",
-        "User-Agent": "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6"
-    }
-};
-
-// ============================================================================
-// AD CONFIGURATION
-// ============================================================================
-const AD_CONFIG = {
-    bannerAd: {
-        key: 'e47e23c42180f22a6878eac897af183c',
-        format: 'iframe',
-        height: 60,
-        width: 468,
-        params: {}
-    },
-    popunderUrl: 'https://staggermeaningless.com/yabwitfi2?key=37017fa6899fefb91f1220463349fca3',
-    insertEvery: 8 // Insert ad after every 8 channels
-};
-
-// ============================================================================
-// PLAYER CONFIGURATION
-// ============================================================================
-const PLAYER_CONFIG = {
-    streaming: {
-        lowLatencyMode: true,
-        bufferingGoal: 15,
-        rebufferingGoal: 3,
-        bufferBehind: 15,
-        retryParameters: {
-            timeout: 15000,
-            maxAttempts: 4,
-            baseDelay: 1000,
-            backoffFactor: 2,
-            fuzzFactor: 0.5
-        },
-        stallEnabled: true,
-        stallThreshold: 1,
-        stallSkip: 0.1
-    },
-    manifest: {
-        retryParameters: {
-            timeout: 10000,
-            maxAttempts: 3
-        },
-        dash: {
-            ignoreMinBufferTime: true
-        }
-    },
-    abr: {
-        enabled: true,
-        defaultBandwidthEstimate: 1000000,
-        switchInterval: 8,
-        bandwidthUpgradeTarget: 0.85,
-        bandwidthDowngradeTarget: 0.95
-    }
-};
-
-// ============================================================================
-// APPLICATION STATE
-// ============================================================================
-const AppState = {
-    allChannels: [],
-    currentSearchTerm: "",
-    currentChannel: null,
-    player: null,
-    video: null,
-    ui: null,
-    currentVideoFit: 'contain',
-    overlayTimeout: null,
-    isOverlayVisible: true,
-    playerInitialized: false,
-    isRetrying: false,
-    popunderShown: false
-};
-
-// ============================================================================
-// DOM ELEMENTS
-// ============================================================================
-const DOM = {
-    channelSearchInput: null,
-    channelGridContainer: null,
-    channelsSidebar: null,
-    playerArea: null,
-    toggleSidebarBtn: null,
-    currentChannelName: null,
-    currentChannelStatus: null,
-    errorBanner: null,
-    errorText: null,
-    errorRetry: null,
-    playerOverlayTop: null,
-    videoContainer: null
-};
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-function getPlaceholderUrl(title) {
-    const truncated = encodeURIComponent(title.substring(0, 16));
-    return `https://placehold.co/300x200/0f1226/9CA3AF?text=${truncated}`;
-}
-
-function scrollIntoViewSafely(element, options = { behavior: 'smooth', block: 'nearest' }) {
-    if (element && typeof element.scrollIntoView === 'function') {
-        element.scrollIntoView(options);
-    }
-}
-
-function showPopunder() {
-    if (!AppState.popunderShown) {
-        window.open(AD_CONFIG.popunderUrl, '_blank');
-        AppState.popunderShown = true;
-    }
-}
-
-// ============================================================================
-// AD FUNCTIONS
-// ============================================================================
-
-function createBannerAd() {
-    const adContainer = document.createElement('div');
-    adContainer.className = 'ad-container';
-    
-    // Create the ad wrapper
-    const adWrapper = document.createElement('div');
-    adWrapper.style.display = 'flex';
-    adWrapper.style.justifyContent = 'center';
-    adWrapper.style.alignItems = 'center';
-    adWrapper.style.minHeight = '60px';
-    
-    // Create atOptions script
-    const atOptionsScript = document.createElement('script');
-    atOptionsScript.textContent = `
-        atOptions = {
-            'key' : '${AD_CONFIG.bannerAd.key}',
-            'format' : 'iframe',
-            'height' : ${AD_CONFIG.bannerAd.height},
-            'width' : ${AD_CONFIG.bannerAd.width},
-            'params' : {}
-        };
-    `;
-    
-    // Create invoke script
-    const invokeScript = document.createElement('script');
-    invokeScript.src = `https://staggermeaningless.com/${AD_CONFIG.bannerAd.key}/invoke.js`;
-    
-    adWrapper.appendChild(atOptionsScript);
-    adWrapper.appendChild(invokeScript);
-    adContainer.appendChild(adWrapper);
-    
-    return adContainer;
-}
-
-// ============================================================================
-// UI FUNCTIONS
-// ============================================================================
-
-function showError(message) {
-    DOM.errorText.textContent = message;
-    DOM.errorBanner.style.display = "flex";
-}
-
-function hideError() {
-    DOM.errorBanner.style.display = "none";
-}
-
-function showLoading() {
-    DOM.channelGridContainer.innerHTML = `
-        <div class="loading">
-            <div class="loading-spinner"></div>
-            <p>Loading channels...</p>
-        </div>
-    `;
-    hideError();
-}
-
-function updateChannelInfo(name, status) {
-    DOM.currentChannelName.textContent = name;
-    const statusSpan = DOM.currentChannelStatus.querySelector('span:last-child');
-    if (statusSpan) {
-        statusSpan.textContent = status;
-    }
-}
-
-function setupOverlayAutoHide() {
-    clearTimeout(AppState.overlayTimeout);
-    
-    if (!DOM.playerOverlayTop) return;
-    
-    DOM.playerOverlayTop.classList.remove('hidden');
-    AppState.isOverlayVisible = true;
-    
-    AppState.overlayTimeout = setTimeout(() => {
-        if (AppState.video && !AppState.video.paused) {
-            DOM.playerOverlayTop.classList.add('hidden');
-            AppState.isOverlayVisible = false;
-        }
-    }, 3000);
-}
-
-function handleMouseMove() {
-    if (!AppState.isOverlayVisible) {
-        DOM.playerOverlayTop.classList.remove('hidden');
-        AppState.isOverlayVisible = true;
-    }
-    setupOverlayAutoHide();
-}
-
-function showPlayer() {
-    DOM.channelsSidebar.classList.add('with-player');
-    DOM.playerArea.classList.add('visible');
-}
-
-// ============================================================================
-// CHANNEL MANAGEMENT
-// ============================================================================
-
-function handleSearch(searchTerm) {
-    AppState.currentSearchTerm = searchTerm.toLowerCase().trim();
-    renderChannels();
-}
-
-function renderChannels() {
-    const filteredChannels = AppState.currentSearchTerm.length > 0
-        ? AppState.allChannels.filter((c) =>
-            c.title.toLowerCase().includes(AppState.currentSearchTerm)
-        )
-        : AppState.allChannels;
-
-    if (!filteredChannels.length) {
-        DOM.channelGridContainer.innerHTML = `
-            <div class="loading">
-                <p>No channels found for "${AppState.currentSearchTerm}".</p>
-            </div>
-        `;
-        return;
-    }
-
-    DOM.channelGridContainer.innerHTML = "";
-    
-    const sectionLabel = document.createElement("div");
-    sectionLabel.className = "channel-section-label";
-    sectionLabel.textContent = AppState.currentSearchTerm.length > 0 
-        ? "Search Results" 
-        : `Live Channels • ${filteredChannels.length}`;
-    DOM.channelGridContainer.appendChild(sectionLabel);
-
-    const grid = document.createElement("div");
-    grid.className = "channel-grid";
-    grid.id = "channel-grid";
-
-    filteredChannels.forEach((channel, index) => {
-        const card = createChannelCard(channel, index);
-        grid.appendChild(card);
-        
-        // Insert ad after every N channels
-        if ((index + 1) % AD_CONFIG.insertEvery === 0 && index < filteredChannels.length - 1) {
-            const adContainer = createBannerAd();
-            grid.appendChild(adContainer);
-        }
-    });
-
-    DOM.channelGridContainer.appendChild(grid);
-}
-
-function createChannelCard(channel, index) {
-    const card = document.createElement("div");
-    card.className = "channel-card";
-    card.tabIndex = 0;
-    card.setAttribute("data-channel-id", channel.id);
-    card.setAttribute("data-index", index.toString());
-
-    if (AppState.currentChannel && AppState.currentChannel.id === channel.id) {
-        card.classList.add("active");
-    }
-
-    const placeholderUrl = getPlaceholderUrl(channel.title);
-
-    card.innerHTML = `
-        <div class="channel-logo-wrapper">
-            <img src="${channel.logo || placeholderUrl}"
-                 alt="${channel.title}"
-                 class="channel-logo"
-                 onerror="this.src='${placeholderUrl}'">
-            <div class="live-badge">LIVE</div>
-        </div>
-        <div class="channel-info">
-            <div class="channel-title">${channel.title}</div>
-        </div>
-    `;
-
-    card.addEventListener("click", () => {
-        playChannel(channel);
-        showPopunder();
-    });
-    
-    card.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            playChannel(channel);
-            showPopunder();
-        }
-    });
-
-    return card;
-}
-
-async function loadChannels() {
-    showLoading();
-    hideError();
-    
-    try {
-        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHANNELS}`;
-        const response = await fetch(url, { 
-            cache: "no-store",
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && Array.isArray(data.data)) {
-            AppState.allChannels = data.data;
-            renderChannels();
-            console.log(`Loaded ${AppState.allChannels.length} channels`);
-        } else {
-            throw new Error("Invalid channel response format");
-        }
-    } catch (error) {
-        console.error("Failed to load channels:", error);
-        showError(`Failed to load channels: ${error.message}`);
-        DOM.channelGridContainer.innerHTML = `
-            <div class="loading">
-                <p>Failed to load channels.</p>
-                <button onclick="location.reload()" style="margin-top: 14px; padding: 10px 20px; background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: 600;">Retry</button>
-            </div>
-        `;
-    }
-}
-
-// ============================================================================
-// VIDEO PLAYER FUNCTIONS
-// ============================================================================
-
-async function attemptAutoplay() {
-    if (!AppState.video) return false;
-    
-    try {
-        AppState.video.muted = false;
-        await AppState.video.play();
-        return true;
-    } catch (error) {
-        try {
-            AppState.video.muted = true;
-            await AppState.video.play();
-            console.log("Playing with muted fallback");
-            setTimeout(() => {
-                AppState.video.muted = false;
-            }, 1000);
-            return true;
-        } catch (mutedError) {
-            console.warn("Autoplay failed:", mutedError);
-            return false;
-        }
-    }
-}
-
-function setVideoFit(fit) {
-    if (!AppState.video) return;
-    
-    const fitClass = `video-fit-${fit}`;
-    AppState.video.className = AppState.video.className.replace(/video-fit-\w+/g, '').trim();
-    AppState.video.classList.add(fitClass);
-    AppState.currentVideoFit = fit;
-}
-
-function configureDRM(channel) {
-    if (!AppState.player) return;
-
-    if (channel.key && channel.key.includes(":")) {
-        const [keyId, keyValue] = channel.key.split(":");
-        AppState.player.configure({
-            drm: {
-                clearKeys: {
-                    [keyId]: keyValue
-                }
-            }
-        });
-        console.log("DRM configured with clearKeys");
-    } else {
-        AppState.player.configure({ drm: { clearKeys: {} } });
-    }
-}
-
-function setupNetworkFilters(channel) {
-    if (!AppState.player) return;
-
-    const net = AppState.player.getNetworkingEngine();
-    net.clearAllRequestFilters();
-    net.clearAllResponseFilters();
-    
-    net.registerRequestFilter((type, request) => {
-        request.headers["Referer"] = API_CONFIG.DEFAULT_HEADERS.Referer;
-        request.headers["User-Agent"] = API_CONFIG.DEFAULT_HEADERS["User-Agent"];
-
-        if (channel.cookie) {
-            request.headers["Cookie"] = channel.cookie;
-        }
-
-        if (
-            channel.cookie &&
-            (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-             type === shaka.net.NetworkingEngine.RequestType.SEGMENT)
-        ) {
-            const hdneaMatch = channel.cookie.match(/__hdnea__=[^;]+/);
-            if (hdneaMatch && !request.uris[0].includes("__hdnea__=")) {
-                const sep = request.uris[0].includes("?") ? "&" : "?";
-                request.uris[0] += sep + hdneaMatch[0];
-            }
-        }
-    });
-
-    console.log("Network filters configured");
-}
-
-async function playChannel(channel) {
-    if (!AppState.player) {
-        console.error("Player not initialized");
-        return;
-    }
-
-    if (AppState.isRetrying) {
-        console.log("Already retrying, skipping...");
-        return;
-    }
-
-    hideError();
-    showPlayer();
-
-    document.querySelectorAll(".channel-card").forEach((c) =>
-        c.classList.remove("active")
-    );
-    
-    AppState.currentChannel = channel;
-    updateChannelInfo(channel.title, "Loading stream…");
-
-    const cards = document.querySelectorAll(".channel-card");
-    cards.forEach((card) => {
-        if (card.getAttribute("data-channel-id") === channel.id) {
-            card.classList.add("active");
-            scrollIntoViewSafely(card);
-        }
-    });
-
-    if (window.innerWidth <= 900) {
-        DOM.channelsSidebar.classList.remove("open");
-    }
-
-    try {
-        AppState.isRetrying = true;
-
-        await AppState.player.unload();
-        
-        configureDRM(channel);
-        setupNetworkFilters(channel);
-
-        console.log(`Loading stream: ${channel.url}`);
-        await AppState.player.load(channel.url);
-        
-        const played = await attemptAutoplay();
-        
-        if (played) {
-            updateChannelInfo(channel.title, "Live • Watching Now");
-            setupOverlayAutoHide();
-            console.log(`Playing: ${channel.title}`);
-        } else {
-            updateChannelInfo(channel.title, "Click play to start");
-        }
-        
-    } catch (error) {
-        console.error("Playback error:", error);
-        updateChannelInfo(channel.title, "Error loading channel");
-        
-        let errorMsg = "Failed to play channel";
-        if (error.code === 1001) {
-            errorMsg = "Network error - check your connection";
-        } else if (error.code === 6007) {
-            errorMsg = "Stream format not supported";
-        } else if (error.message) {
-            errorMsg = error.message;
-        }
-        
-        showError(`${errorMsg}. Please try again.`);
-    } finally {
-        AppState.isRetrying = false;
-    }
-}
-
-async function initPlayer() {
-    try {
-        shaka.polyfill.installAll();
-
-        if (!shaka.Player.isBrowserSupported()) {
-            showError("Your browser does not support video playback.");
-            return;
-        }
-
-        AppState.video = document.querySelector("video");
-        if (!AppState.video) {
-            throw new Error("Video element not found");
-        }
-
-        AppState.player = new shaka.Player();
-        await AppState.player.attach(AppState.video);
-
-        const container = DOM.videoContainer;
-        AppState.ui = new shaka.ui.Overlay(AppState.player, container, AppState.video);
-
-        // Configure UI with fit controls in settings
-        const config = {
-            controlPanelElements: [
-                "play_pause",
-                "time_and_duration",
-                "mute",
-                "volume",
-                "spacer",
-                "quality",
-                "playback_rate",
-                "overflow_menu",
-                "fullscreen"
-            ],
-            addSeekBar: false,
-            addBigPlayButton: true,
-            volumeBarColors: { base: "#475569", level: "#6366F1" },
-            seekBarColors: {
-                base: "#6B7280",
-                buffered: "#F59E0B",
-                played: "#6366F1"
-            },
-            overflowMenuButtons: ['quality', 'playback_rate', 'captions']
-        };
-
-        AppState.ui.configure(config);
-        
-        // Add custom video fit controls to overflow menu
-        addVideoFitControls();
-
-        AppState.player.configure(PLAYER_CONFIG);
-
-        AppState.player.addEventListener("error", (event) => {
-            const error = event.detail;
-            console.error("Player error:", error);
-            
-            let errorMsg = "Playback error occurred";
-            if (error.code === 1001) {
-                errorMsg = "Network error - stream unavailable";
-            } else if (error.code === 6007) {
-                errorMsg = "Unsupported stream format";
-            } else if (error.message) {
-                errorMsg = error.message;
-            }
-            
-            showError(errorMsg);
-            updateChannelInfo(
-                AppState.currentChannel?.title || "Error",
-                "Playback error"
-            );
-        });
-
-        AppState.player.addEventListener("buffering", (event) => {
-            if (event.buffering) {
-                updateChannelInfo(
-                    AppState.currentChannel?.title || "Buffering",
-                    "Buffering stream..."
-                );
-            } else if (AppState.currentChannel) {
-                updateChannelInfo(
-                    AppState.currentChannel.title,
-                    "Live • Watching Now"
-                );
-            }
-        });
-
-        AppState.video.volume = 0.8;
-
-        AppState.video.addEventListener('play', () => {
-            setupOverlayAutoHide();
-        });
-
-        AppState.video.addEventListener('pause', () => {
-            clearTimeout(AppState.overlayTimeout);
-            DOM.playerOverlayTop.classList.remove('hidden');
-            AppState.isOverlayVisible = true;
-        });
-
-        // Set default fit
-        setVideoFit('contain');
-
-        AppState.playerInitialized = true;
-        console.log("Player initialized successfully");
-
-    } catch (error) {
-        console.error("Failed to initialize player:", error);
-        showError("Failed to initialize video player. Please refresh the page.");
-    }
-}
-
-function addVideoFitControls() {
-    // This function adds custom fit controls to the Shaka player settings
-    // Note: Shaka UI customization is limited, so we'll add a simple implementation
-    
-    setTimeout(() => {
-        const overflowMenu = document.querySelector('.shaka-overflow-menu');
-        if (overflowMenu) {
-            const fitButton = document.createElement('button');
-            fitButton.className = 'shaka-overflow-menu-button';
-            fitButton.textContent = 'Video Fit';
-            fitButton.onclick = () => {
-                const currentFit = AppState.currentVideoFit;
-                const fits = ['contain', 'cover', 'fill'];
-                const nextIndex = (fits.indexOf(currentFit) + 1) % fits.length;
-                setVideoFit(fits[nextIndex]);
-                fitButton.textContent = `Video Fit: ${fits[nextIndex]}`;
-            };
-            
-            overflowMenu.appendChild(fitButton);
-        }
-    }, 1000);
-}
-
-// ============================================================================
-// KEYBOARD NAVIGATION
-// ============================================================================
-
-function initKeyboardNavigation() {
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            DOM.channelsSidebar.classList.remove("open");
-        }
-
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-            e.preventDefault();
-            DOM.channelSearchInput.focus();
-        }
-
-        if (
-            (e.key === "ArrowDown" || e.key === "ArrowUp") &&
-            document.activeElement.classList.contains("channel-card")
-        ) {
-            const current = document.activeElement;
-            const index = parseInt(current.getAttribute("data-index") || "0", 10);
-            const nextIndex = e.key === "ArrowDown" ? index + 1 : index - 1;
-            const next = document.querySelector(
-                `.channel-card[data-index="${nextIndex}"]`
-            );
-            
-            if (next) {
-                e.preventDefault();
-                next.focus();
-                scrollIntoViewSafely(next);
-            }
-        }
-
-        if (e.key === " " && document.activeElement === AppState.video) {
-            e.preventDefault();
-            if (AppState.isOverlayVisible) {
-                DOM.playerOverlayTop.classList.add('hidden');
-                AppState.isOverlayVisible = false;
-            } else {
-                DOM.playerOverlayTop.classList.remove('hidden');
-                AppState.isOverlayVisible = true;
-                setupOverlayAutoHide();
-            }
-        }
-    });
-}
-
-// ============================================================================
-// EVENT HANDLERS
-// ============================================================================
-
-function initEventListeners() {
-    const debouncedSearch = debounce((value) => handleSearch(value), 300);
-    DOM.channelSearchInput.addEventListener("input", (e) =>
-        debouncedSearch(e.target.value)
-    );
-
-    DOM.toggleSidebarBtn.addEventListener("click", () => {
-        DOM.channelsSidebar.classList.toggle("open");
-        
-        if (DOM.channelsSidebar.classList.contains("open")) {
-            const activeCard = DOM.channelsSidebar.querySelector(".channel-card.active");
-            const target = activeCard || DOM.channelsSidebar.querySelector(".channel-card");
-            
-            if (target) {
-                target.focus();
-                scrollIntoViewSafely(target);
-            }
-        }
-    });
-
-    DOM.errorRetry.addEventListener("click", () => {
-        hideError();
-        if (AppState.currentChannel) {
-            playChannel(AppState.currentChannel);
-        }
-    });
-
-    const debouncedMouseMove = debounce(handleMouseMove, 100);
-    document.querySelector('.player-area').addEventListener('mousemove', debouncedMouseMove);
-
-    window.addEventListener('resize', debounce(() => {
-        if (window.innerWidth > 900) {
-            DOM.channelsSidebar.classList.remove('open');
-        }
-    }, 250));
-}
-
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-
-function initDOMReferences() {
-    DOM.channelSearchInput = document.getElementById("channel-search");
-    DOM.channelGridContainer = document.getElementById("channel-grid-container");
-    DOM.channelsSidebar = document.getElementById("channels-sidebar");
-    DOM.playerArea = document.getElementById("player-area");
-    DOM.toggleSidebarBtn = document.getElementById("toggle-sidebar");
-    DOM.currentChannelName = document.getElementById("current-channel-name");
-    DOM.currentChannelStatus = document.getElementById("current-channel-status");
-    DOM.errorBanner = document.getElementById("error-banner");
-    DOM.errorText = document.getElementById("error-text");
-    DOM.errorRetry = document.getElementById("error-retry");
-    DOM.playerOverlayTop = document.getElementById("player-overlay-top");
-    DOM.videoContainer = document.querySelector(".shaka-video-container");
-}
-
-async function initApp() {
-    try {
-        console.log("Initializing IMax TV...");
-        
-        initDOMReferences();
-        await initPlayer();
-        await loadChannels();
-        initKeyboardNavigation();
-        initEventListeners();
-        
-        console.log("IMax TV initialized successfully");
-    } catch (error) {
-        console.error("Failed to initialize app:", error);
-        showError("Failed to initialize application. Please refresh the page.");
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener("DOMContentLoaded", initApp);
-} else {
-    initApp();
-}
-</script>
 </body>
 </html>
