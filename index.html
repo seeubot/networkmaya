@@ -12,9 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
 
-    <!-- External JavaScript -->
-    <script src="script.js" defer></script>
-
     <style>
         /* Base Styles */
         * {
@@ -36,7 +33,6 @@
 
         body {
             display: flex;
-            position: relative;
         }
 
         /* Layout */
@@ -53,237 +49,6 @@
             display: flex;
             flex: 1;
             overflow: hidden;
-            position: relative;
-        }
-
-        /* Full-Page Banner Ad */
-        .fullpage-ad {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 90px;
-            background: rgba(15, 18, 38, 0.98);
-            z-index: 1000;
-            display: none;
-            border-bottom: 2px solid rgba(99, 102, 241, 0.3);
-            transform: translateY(-100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(20px);
-        }
-
-        .fullpage-ad.visible {
-            transform: translateY(0);
-        }
-
-        .ad-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .ad-label {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            font-size: 0.7em;
-            color: #9CA3AF;
-            background: rgba(30, 33, 56, 0.7);
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        #ad-iframe-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .banner-ad-wrapper {
-            width: 100%;
-            max-width: 1200px;
-            height: 100%;
-            margin: 0 auto;
-            background: rgba(5, 8, 20, 0.8);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-        }
-
-        .close-ad-btn {
-            position: absolute;
-            top: 8px;
-            left: 12px;
-            background: rgba(239, 68, 68, 0.8);
-            color: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            z-index: 1001;
-        }
-
-        .close-ad-btn:hover {
-            background: rgba(239, 68, 68, 1);
-            transform: scale(1.1);
-        }
-
-        .ad-insertion-point {
-            grid-column: 1 / -1;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
-            margin: 20px 0;
-            position: relative;
-        }
-
-        .ad-insertion-point::after {
-            content: 'Ad Break';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(99, 102, 241, 0.2);
-            color: #A855F7;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75em;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
-
-        /* Telegram Enforcement Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 8, 20, 0.95);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, rgba(15, 18, 38, 0.98) 0%, rgba(10, 14, 39, 0.98) 100%);
-            width: 90%;
-            max-width: 500px;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 2px solid rgba(99, 102, 241, 0.3);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-40px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .modal-header {
-            padding: 24px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
-            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
-            text-align: center;
-        }
-
-        .modal-header h2 {
-            color: #FFFFFF;
-            font-size: 1.8em;
-            font-weight: 700;
-            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .modal-body {
-            padding: 32px 24px;
-            text-align: center;
-        }
-
-        .modal-body p {
-            color: #D1D5DB;
-            font-size: 1.1em;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-
-        .telegram-join-btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #0088CC 0%, #00A5E0 100%);
-            color: white;
-            padding: 16px 32px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1em;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            margin: 16px 0;
-            box-shadow: 0 8px 24px rgba(0, 136, 204, 0.4);
-        }
-
-        .telegram-join-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(0, 136, 204, 0.6);
-        }
-
-        .modal-note {
-            font-size: 0.9em !important;
-            color: #9CA3AF !important;
-            margin-top: 20px !important;
-            font-style: italic;
-        }
-
-        .modal-footer {
-            padding: 20px 24px;
-            border-top: 1px solid rgba(99, 102, 241, 0.2);
-            text-align: center;
-        }
-
-        .modal-btn {
-            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .modal-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.6);
-        }
-
-        .modal-btn.primary {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
 
         /* Channels Sidebar */
@@ -766,10 +531,6 @@
             .channel-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             }
-
-            .fullpage-ad {
-                height: 70px;
-            }
         }
 
         @media (max-width: 768px) {
@@ -785,11 +546,6 @@
 
             .sidebar-title {
                 font-size: 1.3em;
-            }
-
-            .modal-content {
-                width: 95%;
-                max-width: 400px;
             }
         }
 
@@ -815,108 +571,75 @@
             .player-info-group {
                 max-width: 50%;
             }
-
-            .fullpage-ad {
-                height: 60px;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- AdBlock Detection Element (Hidden) -->
-    <div class="ad-box" style="position:fixed;top:0;left:0;width:1px;height:1px;z-index:99999;visibility:hidden;opacity:0;"></div>
-
-    <div class="app-container">
-        <!-- Full-Page Banner Ad -->
-        <div id="fullpage-ad" class="fullpage-ad" style="display: none;">
-            <div class="ad-content">
-                <span class="ad-label">Advertisement</span>
-                <div id="ad-iframe-container"></div>
-                <button class="close-ad-btn" id="close-ad-btn">✕</button>
-            </div>
-        </div>
-
-        <!-- Telegram Enforcement Modal -->
-        <div id="telegram-modal" class="modal-overlay" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>⚠️ Join Our Community</h2>
-                </div>
-                <div class="modal-body">
-                    <p>To continue streaming and support the platform, please join our official Telegram channel for updates and support.</p>
-                    <a href="https://t.me/+t9rJ42tcRJI2MDFl" target="_blank" class="telegram-join-btn">
-                        ✈️ Join Telegram Channel
-                    </a>
-                    <p class="modal-note">You will be redirected automatically upon clicking. Return to this page after joining.</p>
-                </div>
-                <div class="modal-footer">
-                    <button id="modal-continue-btn" class="modal-btn primary">I've Joined, Continue</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <!-- Channels Sidebar -->
-            <aside class="channels-sidebar" id="channels-sidebar">
-                <div class="sidebar-header">
-                    <div class="sidebar-header-top">
-                        <div class="logo-section">
-                            <div class="logo-icon">IM</div>
-                            <div>
-                                <div class="sidebar-title">IMax TV</div>
-                                <div class="sidebar-subtitle">Live Streaming Platform</div>
-                            </div>
+<div class="app-container">
+    <div class="main-content">
+        <!-- Channels Sidebar -->
+        <aside class="channels-sidebar" id="channels-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-top">
+                    <div class="logo-section">
+                        <div class="logo-icon">IM</div>
+                        <div>
+                            <div class="sidebar-title">IMax TV</div>
+                            <div class="sidebar-subtitle">Live Streaming Platform</div>
                         </div>
                     </div>
-                    <div class="sidebar-search">
-                        <span class="search-icon">🔍</span>
-                        <input type="search" id="channel-search"
-                               placeholder="Search channels..."
-                               autocomplete="off">
-                    </div>
                 </div>
-                <div class="channel-grid-container" id="channel-grid-container">
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>Loading channels...</p>
-                    </div>
+                <div class="sidebar-search">
+                    <span class="search-icon">🔍</span>
+                    <input type="search" id="channel-search"
+                           placeholder="Search channels..."
+                           autocomplete="off">
                 </div>
-            </aside>
+            </div>
+            <div class="channel-grid-container" id="channel-grid-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading channels...</p>
+                </div>
+            </div>
+        </aside>
 
-            <!-- Player Area -->
-            <section class="player-area" id="player-area">
-                <div class="player-frame">
-                    <div class="player-overlay-top" id="player-overlay-top">
-                        <div class="player-info-group">
-                            <div class="current-channel-name" id="current-channel-name">
-                                Select a channel
-                            </div>
-                            <div class="current-channel-status" id="current-channel-status">
-                                <span class="status-dot"></span>
-                                <span>Browse channels to start</span>
-                            </div>
+        <!-- Player Area -->
+        <section class="player-area" id="player-area">
+            <div class="player-frame">
+                <div class="player-overlay-top" id="player-overlay-top">
+                    <div class="player-info-group">
+                        <div class="current-channel-name" id="current-channel-name">
+                            Select a channel
                         </div>
-                        
-                        <button class="toggle-sidebar-btn" id="toggle-sidebar">
-                            <span>☰</span>
-                            <span>Channels</span>
-                        </button>
+                        <div class="current-channel-status" id="current-channel-status">
+                            <span class="status-dot"></span>
+                            <span>Browse channels to start</span>
+                        </div>
                     </div>
-
-                    <!-- Shaka Player container -->
-                    <div class="shaka-video-container" data-shaka-player-container>
-                        <video autoplay playsinline preload="metadata"
-                               data-shaka-player></video>
-                    </div>
-
-                    <!-- Error banner -->
-                    <div id="error-banner" class="error-banner" style="display:none;">
-                        <span id="error-text">Playback error.</span>
-                        <button id="error-retry" class="error-retry-btn">Retry</button>
-                    </div>
+                    
+                    <button class="toggle-sidebar-btn" id="toggle-sidebar">
+                        <span>☰</span>
+                        <span>Channels</span>
+                    </button>
                 </div>
-            </section>
-        </div>
+
+                <!-- Shaka Player container -->
+                <div class="shaka-video-container" data-shaka-player-container>
+                    <video autoplay playsinline preload="metadata"
+                           data-shaka-player></video>
+                </div>
+
+                <!-- Error banner -->
+                <div id="error-banner" class="error-banner" style="display:none;">
+                    <span id="error-text">Playback error.</span>
+                    <button id="error-retry" class="error-retry-btn">Retry</button>
+                </div>
+            </div>
+        </section>
     </div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
