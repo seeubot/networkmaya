@@ -1,71 +1,58 @@
-// script.js
+/**
+ * IMax TV - Live Streaming Platform
+ * Main application script
+ */
+
 // ============================================================================
-// CONFIGURATION & API ENDPOINTS
+// API CONFIGURATION
 // ============================================================================
-const CONFIG = {
-    API: {
-        BASE_URL: "https://static-crane-seeutech-17dd4df3.koyeb.app",
-        ENDPOINTS: {
-            CHANNELS: "/api/channels",
-            STREAM_INFO: "/api/stream"
+const API_CONFIG = {
+    BASE_URL: "https://static-crane-seeutech-17dd4df3.koyeb.app",
+    ENDPOINTS: {
+        CHANNELS: "/api/channels",
+        STREAM_INFO: "/api/stream",
+    },
+    DEFAULT_HEADERS: {
+        Referer: "https://www.jiotv.com/",
+        "User-Agent": "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6"
+    }
+};
+
+// ============================================================================
+// PLAYER CONFIGURATION
+// ============================================================================
+const PLAYER_CONFIG = {
+    streaming: {
+        lowLatencyMode: true,
+        bufferingGoal: 15,
+        rebufferingGoal: 3,
+        bufferBehind: 15,
+        retryParameters: {
+            timeout: 15000,
+            maxAttempts: 4,
+            baseDelay: 1000,
+            backoffFactor: 2,
+            fuzzFactor: 0.5
         },
-        DEFAULT_HEADERS: {
-            Referer: "https://www.jiotv.com/",
-            "User-Agent": "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6"
+        stallEnabled: true,
+        stallThreshold: 1,
+        stallSkip: 0.1
+    },
+    manifest: {
+        retryParameters: {
+            timeout: 10000,
+            maxAttempts: 3
+        },
+        dash: {
+            ignoreMinBufferTime: true
         }
     },
-    ADVERTISING: {
-        // Full-Page Banner Ad (every 20 channels)
-        BANNER_AD: {
-            KEY: 'e47e23c42180f22a6878eac897af183c',
-            FORMAT: 'iframe',
-            WIDTH: '100%',
-            HEIGHT: '90px',
-            INSERT_EVERY: 20,
-            AUTO_HIDE_TIME: 15000
-        },
-        POPUNDER_URL: 'https://staggermeaningless.com/yabwitfi2?key=37017fa6899fefb91f1220463349fca3',
-        // AdBlocker detection fake ad class
-        DETECTION_CLASS: 'ad-box',
-        DETECTION_STYLE: 'width:1px;height:1px;position:absolute;left:-9999px;top:-9999px;'
-    },
-    TELEGRAM: {
-        CHANNEL_URL: 'https://t.me/+t9rJ42tcRJI2MDFl',
-        ENFORCEMENT_MODAL_ID: 'telegram-modal'
-    },
-    PLAYER: {
-        streaming: {
-            lowLatencyMode: true,
-            bufferingGoal: 15,
-            rebufferingGoal: 3,
-            bufferBehind: 15,
-            retryParameters: {
-                timeout: 15000,
-                maxAttempts: 4,
-                baseDelay: 1000,
-                backoffFactor: 2,
-                fuzzFactor: 0.5
-            },
-            stallEnabled: true,
-            stallThreshold: 1,
-            stallSkip: 0.1
-        },
-        manifest: {
-            retryParameters: {
-                timeout: 10000,
-                maxAttempts: 3
-            },
-            dash: {
-                ignoreMinBufferTime: true
-            }
-        },
-        abr: {
-            enabled: true,
-            defaultBandwidthEstimate: 1000000,
-            switchInterval: 8,
-            bandwidthUpgradeTarget: 0.85,
-            bandwidthDowngradeTarget: 0.95
-        }
+    abr: {
+        enabled: true,
+        defaultBandwidthEstimate: 1000000,
+        switchInterval: 8,
+        bandwidthUpgradeTarget: 0.85,
+        bandwidthDowngradeTarget: 0.95
     }
 };
 
@@ -83,13 +70,7 @@ const AppState = {
     overlayTimeout: null,
     isOverlayVisible: true,
     playerInitialized: false,
-    isRetrying: false,
-    popunderShown: false,
-    isAdBlockDetected: false,
-    isDevToolsOpen: false,
-    adCounter: 0,
-    devToolsCheckInterval: null,
-    isTelegramModalActive: false
+    isRetrying: false
 };
 
 // ============================================================================
@@ -107,12 +88,7 @@ const DOM = {
     errorText: null,
     errorRetry: null,
     playerOverlayTop: null,
-    videoContainer: null,
-    fullpageAd: null,
-    adIframeContainer: null,
-    closeAdBtn: null,
-    telegramModal: null,
-    modalContinueBtn: null
+    videoContainer: null
 };
 
 // ============================================================================
@@ -143,338 +119,33 @@ function scrollIntoViewSafely(element, options = { behavior: 'smooth', block: 'n
 }
 
 // ============================================================================
-// ADVERTISEMENT MANAGEMENT
-// ============================================================================
-
-/**
- * Creates and injects a full-page width banner ad into the dedicated container.
- */
-function createFullPageBannerAd() {
-    if (!DOM.fullpageAd || !DOM.adIframeContainer) {
-        console.warn('Ad containers not found');
-        return;
-    }
-
-    // Clear previous ad
-    DOM.adIframeContainer.innerHTML = '';
-    
-    // Create ad wrapper
-    const adWrapper = document.createElement('div');
-    adWrapper.className = 'banner-ad-wrapper';
-    adWrapper.style.width = '100%';
-    adWrapper.style.height = '100%';
-    adWrapper.style.overflow = 'hidden';
-    adWrapper.style.backgroundColor = '#0f1226';
-    adWrapper.style.display = 'flex';
-    adWrapper.style.justifyContent = 'center';
-    adWrapper.style.alignItems = 'center';
-
-    // Create ad scripts
-    const atOptionsScript = document.createElement('script');
-    atOptionsScript.textContent = `
-        atOptions = {
-            'key' : '${CONFIG.ADVERTISING.BANNER_AD.KEY}',
-            'format' : '${CONFIG.ADVERTISING.BANNER_AD.FORMAT}',
-            'height' : ${CONFIG.ADVERTISING.BANNER_AD.HEIGHT.replace('px', '')},
-            'width' : '100%',
-            'params' : {}
-        };
-    `;
-
-    const invokeScript = document.createElement('script');
-    invokeScript.src = `https://staggermeaningless.com/${CONFIG.ADVERTISING.BANNER_AD.KEY}/invoke.js`;
-    invokeScript.onerror = () => {
-        console.warn('Ad script failed to load');
-        hideFullPageAd();
-    };
-
-    adWrapper.appendChild(atOptionsScript);
-    adWrapper.appendChild(invokeScript);
-    DOM.adIframeContainer.appendChild(adWrapper);
-
-    // Show the ad with animation
-    DOM.fullpageAd.style.display = 'block';
-    setTimeout(() => DOM.fullpageAd.classList.add('visible'), 10);
-
-    // Auto-hide ad after configured time
-    setTimeout(() => {
-        if (DOM.fullpageAd.classList.contains('visible')) {
-            hideFullPageAd();
-        }
-    }, CONFIG.ADVERTISING.BANNER_AD.AUTO_HIDE_TIME);
-}
-
-function hideFullPageAd() {
-    if (DOM.fullpageAd) {
-        DOM.fullpageAd.classList.remove('visible');
-        setTimeout(() => {
-            DOM.fullpageAd.style.display = 'none';
-        }, 300);
-    }
-}
-
-function showPopunder() {
-    if (!AppState.popunderShown && !AppState.isAdBlockDetected) {
-        try {
-            const popunder = window.open(CONFIG.ADVERTISING.POPUNDER_URL, '_blank');
-            if (popunder) {
-                AppState.popunderShown = true;
-                setTimeout(() => {
-                    popunder.blur();
-                    window.focus();
-                }, 100);
-            }
-        } catch (e) {
-            console.warn('Popunder blocked:', e);
-        }
-    }
-}
-
-// ============================================================================
-// ADBLOCKER & DEVELOPER TOOLS DETECTION
-// ============================================================================
-
-function detectAdBlock() {
-    return new Promise((resolve) => {
-        // Create fake ad element
-        const testAd = document.createElement('div');
-        testAd.className = CONFIG.ADVERTISING.DETECTION_CLASS;
-        testAd.innerHTML = '&nbsp;';
-        testAd.style.cssText = CONFIG.ADVERTISING.DETECTION_STYLE;
-        
-        // Add bait attributes that adblockers target
-        testAd.setAttribute('class', 'ad-box ad-banner adsbygoogle');
-        testAd.setAttribute('data-ad-client', 'ca-pub-123456789');
-        testAd.setAttribute('data-ad-slot', '1234567890');
-        
-        document.body.appendChild(testAd);
-
-        setTimeout(() => {
-            const computedStyle = window.getComputedStyle(testAd);
-            const isHidden = computedStyle.display === 'none' ||
-                computedStyle.visibility === 'hidden' ||
-                computedStyle.opacity === '0' ||
-                computedStyle.width === '0px' ||
-                computedStyle.height === '0px';
-            
-            // Additional check for ad blocker modifications
-            const baitLink = document.createElement('a');
-            baitLink.className = 'adsbygoogle';
-            baitLink.href = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-            document.body.appendChild(baitLink);
-            
-            setTimeout(() => {
-                const isLinkHidden = window.getComputedStyle(baitLink).display === 'none';
-                
-                document.body.removeChild(testAd);
-                document.body.removeChild(baitLink);
-                
-                AppState.isAdBlockDetected = isHidden || isLinkHidden;
-                console.log('AdBlock detection result:', AppState.isAdBlockDetected);
-                resolve(AppState.isAdBlockDetected);
-            }, 100);
-        }, 500);
-    });
-}
-
-function monitorDevTools() {
-    const threshold = 160;
-    const widthDiff = window.outerWidth - window.innerWidth;
-    const heightDiff = window.outerHeight - window.innerHeight;
-    
-    // Check for devtools by monitoring window size differences
-    if (widthDiff > threshold || heightDiff > threshold) {
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            console.warn('DevTools detected via window size');
-            triggerTelegramEnforcement();
-        }
-        return true;
-    }
-    
-    // Check for console open via debugger
-    const startTime = performance.now();
-    debugger; // This will only pause if debugger is open
-    const endTime = performance.now();
-    
-    if (endTime - startTime > 100) {
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            console.warn('DevTools detected via debugger');
-            triggerTelegramEnforcement();
-        }
-        return true;
-    }
-    
-    // Check for eval override (some devtools override eval)
-    try {
-        const originalEval = window.eval;
-        window.eval = function() {};
-        window.eval = originalEval;
-    } catch (e) {
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            console.warn('DevTools detected via eval');
-            triggerTelegramEnforcement();
-        }
-        return true;
-    }
-    
-    return false;
-}
-
-// ============================================================================
-// TELEGRAM ENFORCEMENT SYSTEM
-// ============================================================================
-
-function triggerTelegramEnforcement() {
-    if (AppState.isTelegramModalActive) return;
-    
-    AppState.isTelegramModalActive = true;
-    
-    // Stop video playback if playing
-    if (AppState.player && AppState.player.isLoaded()) {
-        try {
-            AppState.player.unload();
-        } catch (e) {
-            console.warn('Error unloading player:', e);
-        }
-    }
-    
-    if (AppState.video) {
-        AppState.video.pause();
-        AppState.video.src = '';
-    }
-    
-    // Show modal
-    if (DOM.telegramModal) {
-        DOM.telegramModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        
-        // Focus on the continue button
-        setTimeout(() => {
-            if (DOM.modalContinueBtn) {
-                DOM.modalContinueBtn.focus();
-            }
-        }, 100);
-        
-        // Auto-redirect after 15 seconds
-        setTimeout(() => {
-            if (DOM.telegramModal.style.display !== 'none') {
-                window.open(CONFIG.TELEGRAM.CHANNEL_URL, '_blank');
-            }
-        }, 15000);
-    } else {
-        // Fallback redirect if modal not found
-        window.open(CONFIG.TELEGRAM.CHANNEL_URL, '_blank');
-    }
-}
-
-function initSecurityMonitoring() {
-    // Initial AdBlock detection
-    detectAdBlock().then((adBlockDetected) => {
-        if (adBlockDetected) {
-            console.warn('AdBlocker detected - enforcing Telegram join requirement');
-            showError('Ad blocker detected. Please disable it to continue.');
-            setTimeout(triggerTelegramEnforcement, 2000);
-        }
-    });
-    
-    // Continuous DevTools monitoring
-    AppState.devToolsCheckInterval = setInterval(monitorDevTools, 1000);
-    
-    // Right-click detection
-    document.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            triggerTelegramEnforcement();
-        }
-        return false;
-    });
-    
-    // Keyboard shortcuts for DevTools
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'F12' || 
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-            (e.metaKey && e.altKey && e.key === 'I') ||
-            (e.ctrlKey && e.key === 'U')) {
-            e.preventDefault();
-            if (!AppState.isDevToolsOpen) {
-                AppState.isDevToolsOpen = true;
-                triggerTelegramEnforcement();
-            }
-        }
-    });
-    
-    // Monitor console usage
-    const originalConsoleLog = console.log;
-    const originalConsoleError = console.error;
-    const originalConsoleWarn = console.warn;
-    
-    console.log = function(...args) {
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            setTimeout(triggerTelegramEnforcement, 100);
-        }
-        return originalConsoleLog.apply(console, args);
-    };
-    
-    console.error = function(...args) {
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            setTimeout(triggerTelegramEnforcement, 100);
-        }
-        return originalConsoleError.apply(console, args);
-    };
-    
-    console.warn = function(...args) {
-        if (!AppState.isDevToolsOpen) {
-            AppState.isDevToolsOpen = true;
-            setTimeout(triggerTelegramEnforcement, 100);
-        }
-        return originalConsoleWarn.apply(console, args);
-    };
-}
-
-// ============================================================================
 // UI FUNCTIONS
 // ============================================================================
 
 function showError(message) {
-    if (DOM.errorText && DOM.errorBanner) {
-        DOM.errorText.textContent = message;
-        DOM.errorBanner.style.display = "flex";
-    }
+    DOM.errorText.textContent = message;
+    DOM.errorBanner.style.display = "flex";
 }
 
 function hideError() {
-    if (DOM.errorBanner) {
-        DOM.errorBanner.style.display = "none";
-    }
+    DOM.errorBanner.style.display = "none";
 }
 
 function showLoading() {
-    if (DOM.channelGridContainer) {
-        DOM.channelGridContainer.innerHTML = `
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>Loading channels...</p>
-            </div>
-        `;
-    }
+    DOM.channelGridContainer.innerHTML = `
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading channels...</p>
+        </div>
+    `;
     hideError();
 }
 
 function updateChannelInfo(name, status) {
-    if (DOM.currentChannelName) {
-        DOM.currentChannelName.textContent = name;
-    }
-    if (DOM.currentChannelStatus) {
-        const statusSpan = DOM.currentChannelStatus.querySelector('span:last-child');
-        if (statusSpan) {
-            statusSpan.textContent = status;
-        }
+    DOM.currentChannelName.textContent = name;
+    const statusSpan = DOM.currentChannelStatus.querySelector('span:last-child');
+    if (statusSpan) {
+        statusSpan.textContent = status;
     }
 }
 
@@ -503,12 +174,8 @@ function handleMouseMove() {
 }
 
 function showPlayer() {
-    if (DOM.channelsSidebar) {
-        DOM.channelsSidebar.classList.add('with-player');
-    }
-    if (DOM.playerArea) {
-        DOM.playerArea.classList.add('visible');
-    }
+    DOM.channelsSidebar.classList.add('with-player');
+    DOM.playerArea.classList.add('visible');
 }
 
 // ============================================================================
@@ -521,8 +188,6 @@ function handleSearch(searchTerm) {
 }
 
 function renderChannels() {
-    if (!DOM.channelGridContainer) return;
-    
     const filteredChannels = AppState.currentSearchTerm.length > 0
         ? AppState.allChannels.filter((c) =>
             c.title.toLowerCase().includes(AppState.currentSearchTerm)
@@ -554,19 +219,6 @@ function renderChannels() {
     filteredChannels.forEach((channel, index) => {
         const card = createChannelCard(channel, index);
         grid.appendChild(card);
-        
-        // Insert ad marker after every N channels
-        if ((index + 1) % CONFIG.ADVERTISING.BANNER_AD.INSERT_EVERY === 0 && index < filteredChannels.length - 1) {
-            const adMarker = document.createElement('div');
-            adMarker.className = 'ad-insertion-point';
-            adMarker.dataset.adIndex = AppState.adCounter++;
-            grid.appendChild(adMarker);
-            
-            // Show ad for the first insertion point
-            if (index === CONFIG.ADVERTISING.BANNER_AD.INSERT_EVERY - 1) {
-                setTimeout(createFullPageBannerAd, 1000);
-            }
-        }
     });
 
     DOM.channelGridContainer.appendChild(grid);
@@ -599,23 +251,13 @@ function createChannelCard(channel, index) {
     `;
 
     card.addEventListener("click", () => {
-        if (AppState.isAdBlockDetected || AppState.isDevToolsOpen) {
-            triggerTelegramEnforcement();
-            return;
-        }
         playChannel(channel);
-        showPopunder();
     });
     
     card.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            if (AppState.isAdBlockDetected || AppState.isDevToolsOpen) {
-                triggerTelegramEnforcement();
-                return;
-            }
             playChannel(channel);
-            showPopunder();
         }
     });
 
@@ -627,7 +269,7 @@ async function loadChannels() {
     hideError();
     
     try {
-        const url = `${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.CHANNELS}`;
+        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHANNELS}`;
         const response = await fetch(url, { 
             cache: "no-store",
             headers: {
@@ -651,14 +293,12 @@ async function loadChannels() {
     } catch (error) {
         console.error("Failed to load channels:", error);
         showError(`Failed to load channels: ${error.message}`);
-        if (DOM.channelGridContainer) {
-            DOM.channelGridContainer.innerHTML = `
-                <div class="loading">
-                    <p>Failed to load channels.</p>
-                    <button onclick="location.reload()" style="margin-top: 14px; padding: 10px 20px; background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: 600;">Retry</button>
-                </div>
-            `;
-        }
+        DOM.channelGridContainer.innerHTML = `
+            <div class="loading">
+                <p>Failed to load channels.</p>
+                <button onclick="location.reload()" style="margin-top: 14px; padding: 10px 20px; background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: 600;">Retry</button>
+            </div>
+        `;
     }
 }
 
@@ -679,9 +319,7 @@ async function attemptAutoplay() {
             await AppState.video.play();
             console.log("Playing with muted fallback");
             setTimeout(() => {
-                if (AppState.video) {
-                    AppState.video.muted = false;
-                }
+                AppState.video.muted = false;
             }, 1000);
             return true;
         } catch (mutedError) {
@@ -726,8 +364,8 @@ function setupNetworkFilters(channel) {
     net.clearAllResponseFilters();
     
     net.registerRequestFilter((type, request) => {
-        request.headers["Referer"] = CONFIG.API.DEFAULT_HEADERS.Referer;
-        request.headers["User-Agent"] = CONFIG.API.DEFAULT_HEADERS["User-Agent"];
+        request.headers["Referer"] = API_CONFIG.DEFAULT_HEADERS.Referer;
+        request.headers["User-Agent"] = API_CONFIG.DEFAULT_HEADERS["User-Agent"];
 
         if (channel.cookie) {
             request.headers["Cookie"] = channel.cookie;
@@ -750,11 +388,6 @@ function setupNetworkFilters(channel) {
 }
 
 async function playChannel(channel) {
-    if (AppState.isAdBlockDetected || AppState.isDevToolsOpen) {
-        triggerTelegramEnforcement();
-        return;
-    }
-    
     if (!AppState.player) {
         console.error("Player not initialized");
         return;
@@ -876,7 +509,7 @@ async function initPlayer() {
         // Add custom video fit controls to overflow menu
         addVideoFitControls();
 
-        AppState.player.configure(CONFIG.PLAYER);
+        AppState.player.configure(PLAYER_CONFIG);
 
         AppState.player.addEventListener("error", (event) => {
             const error = event.detail;
@@ -937,6 +570,9 @@ async function initPlayer() {
 }
 
 function addVideoFitControls() {
+    // This function adds custom fit controls to the Shaka player settings
+    // Note: Shaka UI customization is limited, so we'll add a simple implementation
+    
     setTimeout(() => {
         const overflowMenu = document.querySelector('.shaka-overflow-menu');
         if (overflowMenu) {
@@ -1009,60 +645,33 @@ function initKeyboardNavigation() {
 
 function initEventListeners() {
     const debouncedSearch = debounce((value) => handleSearch(value), 300);
-    if (DOM.channelSearchInput) {
-        DOM.channelSearchInput.addEventListener("input", (e) =>
-            debouncedSearch(e.target.value)
-        );
-    }
+    DOM.channelSearchInput.addEventListener("input", (e) =>
+        debouncedSearch(e.target.value)
+    );
 
-    if (DOM.toggleSidebarBtn) {
-        DOM.toggleSidebarBtn.addEventListener("click", () => {
-            DOM.channelsSidebar.classList.toggle("open");
+    DOM.toggleSidebarBtn.addEventListener("click", () => {
+        DOM.channelsSidebar.classList.toggle("open");
+        
+        if (DOM.channelsSidebar.classList.contains("open")) {
+            const activeCard = DOM.channelsSidebar.querySelector(".channel-card.active");
+            const target = activeCard || DOM.channelsSidebar.querySelector(".channel-card");
             
-            if (DOM.channelsSidebar.classList.contains("open")) {
-                const activeCard = DOM.channelsSidebar.querySelector(".channel-card.active");
-                const target = activeCard || DOM.channelsSidebar.querySelector(".channel-card");
-                
-                if (target) {
-                    target.focus();
-                    scrollIntoViewSafely(target);
-                }
+            if (target) {
+                target.focus();
+                scrollIntoViewSafely(target);
             }
-        });
-    }
+        }
+    });
 
-    if (DOM.errorRetry) {
-        DOM.errorRetry.addEventListener("click", () => {
-            hideError();
-            if (AppState.currentChannel) {
-                playChannel(AppState.currentChannel);
-            }
-        });
-    }
-
-    if (DOM.closeAdBtn) {
-        DOM.closeAdBtn.addEventListener("click", hideFullPageAd);
-    }
-
-    if (DOM.modalContinueBtn) {
-        DOM.modalContinueBtn.addEventListener("click", () => {
-            const userVerified = confirm("Please confirm you have joined the Telegram channel to continue.");
-            if (userVerified) {
-                DOM.telegramModal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-                AppState.isTelegramModalActive = false;
-                if (AppState.currentChannel) {
-                    playChannel(AppState.currentChannel);
-                }
-            }
-        });
-    }
+    DOM.errorRetry.addEventListener("click", () => {
+        hideError();
+        if (AppState.currentChannel) {
+            playChannel(AppState.currentChannel);
+        }
+    });
 
     const debouncedMouseMove = debounce(handleMouseMove, 100);
-    const playerArea = document.querySelector('.player-area');
-    if (playerArea) {
-        playerArea.addEventListener('mousemove', debouncedMouseMove);
-    }
+    document.querySelector('.player-area').addEventListener('mousemove', debouncedMouseMove);
 
     window.addEventListener('resize', debounce(() => {
         if (window.innerWidth > 900) {
@@ -1088,40 +697,24 @@ function initDOMReferences() {
     DOM.errorRetry = document.getElementById("error-retry");
     DOM.playerOverlayTop = document.getElementById("player-overlay-top");
     DOM.videoContainer = document.querySelector(".shaka-video-container");
-    DOM.fullpageAd = document.getElementById("fullpage-ad");
-    DOM.adIframeContainer = document.getElementById("ad-iframe-container");
-    DOM.closeAdBtn = document.getElementById("close-ad-btn");
-    DOM.telegramModal = document.getElementById("telegram-modal");
-    DOM.modalContinueBtn = document.getElementById("modal-continue-btn");
 }
 
 async function initApp() {
     try {
-        console.log("Initializing IMax TV Enhanced...");
+        console.log("Initializing IMax TV...");
         
         initDOMReferences();
         await initPlayer();
-        initSecurityMonitoring();
         await loadChannels();
         initKeyboardNavigation();
         initEventListeners();
         
-        console.log("IMax TV Enhanced initialized successfully");
+        console.log("IMax TV initialized successfully");
     } catch (error) {
         console.error("Failed to initialize app:", error);
         showError("Failed to initialize application. Please refresh the page.");
     }
 }
-
-// Clean up on page unload
-window.addEventListener('beforeunload', () => {
-    if (AppState.devToolsCheckInterval) {
-        clearInterval(AppState.devToolsCheckInterval);
-    }
-    if (AppState.player) {
-        AppState.player.destroy();
-    }
-});
 
 if (document.readyState === 'loading') {
     document.addEventListener("DOMContentLoaded", initApp);
