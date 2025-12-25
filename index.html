@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rockerz Channels</title>
+    <title>Stream Channels</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
     <style>
@@ -250,53 +250,78 @@
             background: #000;
             z-index: 9999;
             display: none;
-            flex-direction: column;
         }
 
         .video-modal.active {
-            display: flex;
-        }
-
-        .video-header {
-            background: rgba(10, 10, 12, 0.95);
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .video-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            display: block;
         }
 
         .shaka-video-container {
-            flex: 1;
             position: relative;
             width: 100%;
             height: 100%;
+        }
+
+        /* Video Overlay Controls */
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+            padding: 16px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .video-overlay > * {
+            pointer-events: all;
+        }
+
+        .video-overlay.hide {
+            opacity: 0;
+        }
+
+        .video-channel-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            max-width: 70%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .video-close-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .video-close-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .video-close-btn:active {
+            transform: scale(0.95);
         }
 
         video {
@@ -325,11 +350,13 @@
                 width: 28px;
                 height: 28px;
             }
-            .video-header {
-                padding: 10px 12px;
+            .video-channel-name {
+                font-size: 16px;
             }
-            .video-title {
-                font-size: 14px;
+            .video-close-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
             }
         }
     </style>
@@ -352,11 +379,16 @@
 
     <!-- Video Player Modal -->
     <div id="videoModal" class="video-modal">
-        <div class="video-header">
-            <div class="video-title" id="videoTitle">Channel Name</div>
-            <button class="close-btn" id="closeVideoBtn">&times;</button>
-        </div>
         <div class="shaka-video-container" data-shaka-player>
+            <div class="video-overlay" id="videoOverlay">
+                <div class="video-channel-name" id="videoChannelName">Channel Name</div>
+                <button class="video-close-btn" id="closeVideoBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
             <video id="videoPlayer" autoplay playsinline preload="metadata" poster=""></video>
         </div>
     </div>
@@ -396,7 +428,8 @@
         const searchInput = document.getElementById('searchInput');
         const errorMsg = document.getElementById('error-msg');
         const videoModal = document.getElementById('videoModal');
-        const videoTitle = document.getElementById('videoTitle');
+        const videoChannelName = document.getElementById('videoChannelName');
+        const videoOverlay = document.getElementById('videoOverlay');
         const closeVideoBtn = document.getElementById('closeVideoBtn');
         const videoPlayer = document.getElementById('videoPlayer');
 
@@ -465,8 +498,27 @@
 
         // Play Channel in Video Player
         async function playChannelInPlayer(channelData) {
-            videoTitle.textContent = channelData.title;
+            videoChannelName.textContent = channelData.title;
             videoModal.classList.add('active');
+            videoOverlay.classList.remove('hide');
+
+            // Auto-hide overlay after 3 seconds
+            let hideTimeout = setTimeout(() => {
+                videoOverlay.classList.add('hide');
+            }, 3000);
+
+            // Show overlay on mouse move or touch
+            const showOverlay = () => {
+                videoOverlay.classList.remove('hide');
+                clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(() => {
+                    videoOverlay.classList.add('hide');
+                }, 3000);
+            };
+
+            videoModal.addEventListener('mousemove', showOverlay);
+            videoModal.addEventListener('touchstart', showOverlay);
+            videoModal.addEventListener('click', showOverlay);
 
             // Request fullscreen
             if (videoModal.requestFullscreen) {
