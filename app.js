@@ -1,3 +1,109 @@
+// Add protection against right-click and inspect
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+document.addEventListener('keydown', function(e) {
+    // Disable F12 (DevTools)
+    if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable Ctrl+Shift+I (DevTools)
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable Ctrl+Shift+J (DevTools Console)
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable Ctrl+U (View Source)
+    if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable Ctrl+S (Save Page)
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable Ctrl+Shift+C (Inspect Element)
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Prevent opening DevTools via right-click inspect
+document.addEventListener('DOMContentLoaded', function() {
+    // Override console methods
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    const originalConsoleInfo = console.info;
+    
+    console.log = function() {};
+    console.error = function() {};
+    console.warn = function() {};
+    console.info = function() {};
+    
+    // Optional: Only override in production
+    if (window.location.hostname !== 'localhost') {
+        // Restore console for debugging if needed
+        // console.log = originalConsoleLog;
+        // console.error = originalConsoleError;
+        // console.warn = originalConsoleWarn;
+        // console.info = originalConsoleInfo;
+    }
+    
+    // Disable text selection for certain elements
+    const style = document.createElement('style');
+    style.textContent = `
+        .channel-card, .ad-card, .video-container {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .channel-card img {
+            pointer-events: none;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Detect DevTools opening
+    let devtools = function() {};
+    devtools.toString = function() {
+        // This code runs when DevTools is opened
+        console.log = function() {};
+        console.clear = function() {};
+        // You can redirect or show warning
+        // window.location.reload();
+    };
+    
+    setInterval(function() {
+        const start = performance.now();
+        console.log(devtools);
+        console.clear();
+        const end = performance.now();
+        
+        // If DevTools is open, the toString method will be called
+        if (end - start > 100) {
+            // DevTools detected
+            document.body.innerHTML = '<div style="text-align:center;padding:50px;color:white;">Developer Tools are not allowed on this page. Please close DevTools to continue.</div>';
+        }
+    }, 1000);
+});
+
 // API Configuration
 const API_URL = 'https://static-crane-seeutech-17dd4df3.koyeb.app/api/channels';
 const SMARTLINK_URL = 'https://staggermeaningless.com/djr63xfh5?key=0594e81080ace7ae2229d79efcbc8072';
