@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stream Channels</title>
+    <title>Rockerz Channels</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
     <style>
@@ -468,6 +468,21 @@
             videoTitle.textContent = channelData.title;
             videoModal.classList.add('active');
 
+            // Request fullscreen
+            if (videoModal.requestFullscreen) {
+                try {
+                    await videoModal.requestFullscreen();
+                } catch (err) {
+                    console.log('Fullscreen request failed:', err);
+                }
+            } else if (videoModal.webkitRequestFullscreen) {
+                videoModal.webkitRequestFullscreen();
+            } else if (videoModal.mozRequestFullScreen) {
+                videoModal.mozRequestFullScreen();
+            } else if (videoModal.msRequestFullscreen) {
+                videoModal.msRequestFullscreen();
+            }
+
             if (!shakaPlayer) {
                 const result = await initShakaPlayer();
                 if (result) {
@@ -608,6 +623,19 @@
 
         // Close Video Player
         function closeVideoPlayer() {
+            // Exit fullscreen first
+            if (document.fullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+            
             videoModal.classList.remove('active');
             if (shakaPlayer) {
                 shakaPlayer.unload();
@@ -716,24 +744,36 @@
         function handleChannelClick(item) {
             // Check if running in Android WebView
             if (window.Android && window.Android.playChannel) {
-                // Store channel data for ad flow
+                // Store channel data for later playback
                 pendingChannelData = item;
                 adOpened = true;
                 
-                // Open smart link ad in external browser
-                window.location.href = SMARTLINK_URL;
+                // Open smart link ad in new window/tab (external browser)
+                const adWindow = window.open(SMARTLINK_URL, '_blank');
                 
-                // Fallback: Play immediately after short delay if ad doesn't open
+                // If popup was blocked or failed, try direct navigation
+                if (!adWindow || adWindow.closed || typeof adWindow.closed === 'undefined') {
+                    console.log('Popup blocked, trying direct navigation');
+                    window.location.href = SMARTLINK_URL;
+                }
+                
+                // Play channel after short delay (fallback if user closes ad quickly)
                 setTimeout(() => {
                     if (pendingChannelData && window.Android && window.Android.playChannel) {
                         window.Android.playChannel(JSON.stringify(pendingChannelData));
                         pendingChannelData = null;
                         adOpened = false;
                     }
-                }, 2000);
+                }, 3000);
             } else {
-                // Web browser: play directly in modal
-                playChannelInPlayer(item);
+                // Web browser: Show ad first, then play
+                // Open smartlink in new tab
+                const adWindow = window.open(SMARTLINK_URL, '_blank');
+                
+                // Wait a moment then play video
+                setTimeout(() => {
+                    playChannelInPlayer(item);
+                }, 1000);
             }
         }
 
