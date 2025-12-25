@@ -1,645 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMax TV - Live Streaming</title>
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Shaka Player Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stream Channels</title>
     <style>
-        /* Base Styles */
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: #161618;
+            --accent: #3b82f6;
+            --telegram: #0088cc;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --search-bg: #1e1e22;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #0a0e27;
-            color: #E8EAED;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            display: flex;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            overflow-x: hidden;
         }
 
-        /* Layout */
-        .app-container {
-            display: flex;
-            flex: 1;
-            height: 100vh;
-            width: 100vw;
+        .nav-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .search-bar {
+            max-width: 800px;
+            margin: 0 auto;
             position: relative;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1d35 50%, #0f1229 100%);
-        }
-
-        .main-content {
             display: flex;
-            flex: 1;
-            overflow: hidden;
+            align-items: center;
         }
 
-        /* Channels Sidebar */
-        .channels-sidebar {
+        .search-bar input {
             width: 100%;
-            background: linear-gradient(180deg, rgba(15, 18, 38, 0.98) 0%, rgba(10, 14, 39, 0.98) 100%);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            backdrop-filter: blur(30px);
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-right: 1px solid rgba(99, 102, 241, 0.1);
-        }
-
-        .channels-sidebar.with-player {
-            width: 420px;
-            max-width: 450px;
-            min-width: 320px;
-        }
-
-        .sidebar-header {
-            padding: 20px 24px 16px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
-            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            flex-shrink: 0;
-        }
-
-        .sidebar-header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 42px;
-            height: 42px;
-            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 800;
+            background: var(--search-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 16px 14px 44px;
+            border-radius: 14px;
             color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-        }
-
-        .sidebar-title {
-            color: #FFFFFF;
-            font-size: 1.5em;
-            font-weight: 800;
-            letter-spacing: 0.02em;
-            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .sidebar-subtitle {
-            font-size: 0.75em;
-            color: #A0AEC0;
-            margin-top: 2px;
-            font-weight: 500;
-        }
-
-        .sidebar-search {
-            position: relative;
-        }
-
-        #channel-search {
-            width: 100%;
-            padding: 12px 20px 12px 44px;
-            font-size: 0.95em;
-            border-radius: 12px;
-            border: 2px solid rgba(99, 102, 241, 0.3);
-            background: rgba(15, 18, 38, 0.8);
-            color: #E8EAED;
+            font-size: 16px;
             outline: none;
-            transition: all 0.3s;
-            font-weight: 500;
+            transition: all 0.2s ease;
         }
 
-        #channel-search::placeholder {
-            color: #6B7280;
-        }
-
-        #channel-search:focus {
-            border-color: #6366F1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-            background: rgba(15, 18, 38, 0.95);
+        .search-bar input:focus {
+            border-color: var(--accent);
+            background: #252529;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
         .search-icon {
             position: absolute;
             left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6B7280;
-            font-size: 18px;
+            opacity: 0.5;
             pointer-events: none;
         }
 
-        .channel-grid-container {
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
             padding: 16px;
-            flex: 1;
-            overflow-y: auto;
         }
 
-        .channel-grid-container::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        .channel-grid-container::-webkit-scrollbar-track {
-            background: rgba(15, 18, 38, 0.5);
-        }
-
-        .channel-grid-container::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #6366F1 0%, #A855F7 100%);
-            border-radius: 5px;
-        }
-
-        .channel-grid-container::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #4F46E5 0%, #9333EA 100%);
-        }
-
-        .channel-section-label {
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: #A855F7;
-            margin: 20px 8px 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 12px;
         }
 
-        .channel-section-label::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: linear-gradient(180deg, #6366F1 0%, #A855F7 100%);
-            border-radius: 2px;
-        }
-
-        .channel-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 14px;
-            padding: 0 4px;
+        @media (min-width: 640px) {
+            .channels-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+            .main-content { padding: 24px; }
         }
 
         .channel-card {
-            background: linear-gradient(135deg, rgba(30, 33, 56, 0.8) 0%, rgba(20, 23, 43, 0.8) 100%);
-            border-radius: 14px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.2s;
             cursor: pointer;
-            border: 2px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            aspect-ratio: 1/1.2;
             display: flex;
             flex-direction: column;
-            padding: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .channel-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
-            opacity: 0;
-            transition: opacity 0.3s;
         }
 
         .channel-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+            background: #1c1c1f;
         }
 
-        .channel-card:hover::before {
-            opacity: 1;
+        .channel-card:active {
+            transform: scale(0.96);
         }
 
-        .channel-card:focus-visible {
-            border-color: #FBBF24;
-            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.3);
-        }
-
-        .channel-card.active {
-            border-color: #6366F1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4), 0 8px 24px rgba(99, 102, 241, 0.4);
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
-        }
-
-        .channel-logo-wrapper {
-            width: 100%;
-            aspect-ratio: 16 / 9;
+        .logo-box {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(5, 8, 20, 0.8);
-            position: relative;
-            overflow: hidden;
+            padding: 20px;
+            background: #1c1c1f;
         }
 
-        .channel-logo {
-            width: 100%;
-            height: 100%;
+        .logo-box img {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+        }
+
+        .channel-meta {
             padding: 12px;
+            background: var(--card-bg);
         }
 
-        .live-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.7em;
-            font-weight: 700;
+        .channel-name {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .channel-tag {
+            font-size: 11px;
+            color: var(--text-dim);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
-            animation: pulse 2s infinite;
+            letter-spacing: 0.5px;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        .channel-info {
-            padding: 10px;
-            background: rgba(10, 14, 39, 0.6);
-        }
-
-        .channel-title {
-            font-weight: 600;
-            font-size: 0.85em;
-            color: #F9FAFB;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: center;
-        }
-
-        /* Player Area */
-        .player-area {
-            flex: 1;
-            position: relative;
-            background: #000;
-            display: none;
-            flex-direction: column;
-        }
-
-        .player-area.visible {
-            display: flex;
-        }
-
-        .player-frame {
-            flex: 1;
-            position: relative;
-            background: #000;
-        }
-
-        .shaka-video-container {
-            width: 100%;
-            height: 100%;
-            background: #000;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background-color: #000;
-        }
-
-        /* Video Object-Fit Classes */
-        .video-fit-contain { object-fit: contain !important; }
-        .video-fit-cover { object-fit: cover !important; }
-        .video-fit-fill { object-fit: fill !important; }
-
-        /* Top overlay */
-        .player-overlay-top {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 28px;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
-            z-index: 5;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-            opacity: 1;
-            transition: opacity 0.3s;
-        }
-
-        .player-overlay-top.hidden {
-            opacity: 0;
-        }
-
-        .player-info-group {
-            pointer-events: auto;
-            max-width: 60%;
-        }
-
-        .current-channel-name {
-            color: #FFFFFF;
-            font-weight: 800;
-            font-size: 1.6em;
-            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .current-channel-status {
-            font-size: 0.9em;
-            color: #D1D5DB;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #10B981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .toggle-sidebar-btn {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(168, 85, 247, 0.9) 100%);
+        .ad-card {
+            grid-column: 1 / -1;
+            background: var(--card-bg);
             border-radius: 12px;
-            border: none;
-            color: #FFFFFF;
-            padding: 12px 24px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.95em;
-            letter-spacing: 0.02em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s;
-            pointer-events: auto;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin: 8px 0;
+            width: 100%;
         }
 
-        .toggle-sidebar-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
-        }
-
-        .toggle-sidebar-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Loading / Error */
-        .loading {
+        .ad-label {
+            font-size: 10px;
+            color: var(--text-dim);
             text-align: center;
-            padding: 48px 24px;
-            color: #9CA3AF;
-            font-size: 0.95em;
-        }
-
-        .loading-spinner {
-            border: 4px solid rgba(99, 102, 241, 0.2);
-            border-top: 4px solid #6366F1;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-banner {
-            position: absolute;
-            left: 50%;
-            bottom: 10%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
-            color: #FEE2E2;
-            padding: 16px 24px;
-            border-radius: 16px;
-            font-size: 0.9em;
-            border: 2px solid rgba(254, 226, 226, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            z-index: 15;
-            pointer-events: auto;
-            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            letter-spacing: 1px;
             font-weight: 500;
         }
 
-        .error-retry-btn {
-            background: rgba(254, 226, 226, 0.2);
-            border: 2px solid #FEE2E2;
-            color: #FEE2E2;
-            padding: 8px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: all 0.2s;
+        .ad-container {
+            width: 100%;
+            height: 100px;
+            background: #0a0a0c;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .error-retry-btn:hover {
-            background: rgba(254, 226, 226, 0.3);
-            transform: scale(1.05);
+        .ad-container iframe,
+        .ad-container ins,
+        .ad-container > div {
+            max-width: 100% !important;
+            max-height: 100px !important;
         }
 
-        /* Shaka UI Custom Styles */
-        .shaka-bottom-controls {
-            padding: 0 2em 1em;
+        .ad-container > * {
+            margin: 0 auto;
+            display: block;
         }
 
-        .shaka-settings-menu {
-            background: rgba(15, 18, 38, 0.98) !important;
-            border: 1px solid rgba(99, 102, 241, 0.3) !important;
-            border-radius: 12px !important;
-            backdrop-filter: blur(20px);
+        .telegram-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--telegram);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(0, 136, 204, 0.4);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s;
+            text-decoration: none;
         }
 
-        .shaka-back-to-overflow-button,
-        .shaka-overflow-menu-button {
-            color: #E8EAED !important;
+        .telegram-btn:hover {
+            transform: scale(1.1) translateY(-5px);
+            background-color: #0099e5;
         }
 
-        .shaka-overflow-menu-button:hover {
-            background: rgba(99, 102, 241, 0.2) !important;
+        .telegram-btn:active {
+            transform: scale(0.9);
         }
 
-        /* Mobile adjustments */
-        @media (max-width: 900px) {
-            .channels-sidebar.with-player {
-                position: absolute;
-                z-index: 20;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                width: 85%;
-                max-width: 450px;
-                transform: translateX(-100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: 20px 0 40px rgba(0, 0, 0, 0.9);
-            }
-
-            .channels-sidebar.with-player.open {
-                transform: translateX(0);
-            }
-
-            .channel-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            }
+        .telegram-btn svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+            margin-right: 2px;
         }
 
-        @media (max-width: 768px) {
-            .current-channel-name {
-                font-size: 1.3em;
-            }
-
-            .logo-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 20px;
-            }
-
-            .sidebar-title {
-                font-size: 1.3em;
-            }
+        .loader {
+            display: flex;
+            justify-content: center;
+            padding: 50px;
         }
 
-        @media (max-width: 480px) {
-            .sidebar-header {
-                padding: 16px 18px 12px;
-            }
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
-            .toggle-sidebar-btn {
-                padding: 10px 18px;
-                font-size: 0.85em;
-            }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-            .player-overlay-top {
-                padding: 14px 18px;
+        @media (max-width: 640px) {
+            .telegram-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 54px;
+                height: 54px;
             }
-
-            .channel-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 10px;
-            }
-
-            .player-info-group {
-                max-width: 50%;
+            .telegram-btn svg {
+                width: 28px;
+                height: 28px;
             }
         }
     </style>
 </head>
 <body>
-<div class="app-container">
-    <div class="main-content">
-        <!-- Channels Sidebar -->
-        <aside class="channels-sidebar" id="channels-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-header-top">
-                    <div class="logo-section">
-                        <div class="logo-icon">IM</div>
-                        <div>
-                            <div class="sidebar-title">IMax TV</div>
-                            <div class="sidebar-subtitle">Live Streaming Platform</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="sidebar-search">
-                    <span class="search-icon">🔍</span>
-                    <input type="search" id="channel-search"
-                           placeholder="Search channels..."
-                           autocomplete="off">
-                </div>
-            </div>
-            <div class="channel-grid-container" id="channel-grid-container">
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading channels...</p>
-                </div>
-            </div>
-        </aside>
 
-        <!-- Player Area -->
-        <section class="player-area" id="player-area">
-            <div class="player-frame">
-                <div class="player-overlay-top" id="player-overlay-top">
-                    <div class="player-info-group">
-                        <div class="current-channel-name" id="current-channel-name">
-                            Select a channel
-                        </div>
-                        <div class="current-channel-status" id="current-channel-status">
-                            <span class="status-dot"></span>
-                            <span>Browse channels to start</span>
-                        </div>
-                    </div>
-                    
-                    <button class="toggle-sidebar-btn" id="toggle-sidebar">
-                        <span>☰</span>
-                        <span>Channels</span>
-                    </button>
-                </div>
-
-                <!-- Shaka Player container -->
-                <div class="shaka-video-container" data-shaka-player-container>
-                    <video autoplay playsinline preload="metadata"
-                           data-shaka-player></video>
-                </div>
-
-                <!-- Error banner -->
-                <div id="error-banner" class="error-banner" style="display:none;">
-                    <span id="error-text">Playback error.</span>
-                    <button id="error-retry" class="error-retry-btn">Retry</button>
-                </div>
-            </div>
-        </section>
+    <div class="nav-wrapper">
+        <div class="search-bar">
+            <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" id="searchInput" placeholder="Search for channels..." autocomplete="off">
+        </div>
     </div>
-</div>
 
-<script src="app.js"></script>
+    <div id="error-msg" style="background: rgba(239, 68, 68, 0.1); color: #f87171; padding: 12px; margin: 16px; border-radius: 8px; text-align: center; display: none;"></div>
+
+    <main class="main-content">
+        <div id="loader" class="loader"><div class="spinner"></div></div>
+        <div id="grid" class="channels-grid"></div>
+    </main>
+
+    <a href="https://t.me/+t9rJ42tcRJI2MDFl" target="_blank" class="telegram-btn" aria-label="Join our Telegram">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.16l-1.36 5.44c-.17.58-.34.77-.44.78-.22.02-.4-.15-.61-.29-.34-.22-.53-.36-.87-.58-.38-.25-.13-.39.08-.62.06-.06 1.06-.97 1.08-1.05.002-.01-.001-.05-.03-.06-.03-.01-.07-.01-.1 0-.04.01-.7.44-1.97 1.3-.19.13-.35.19-.5.19-.17 0-.49-.09-.72-.17-.29-.09-.52-.14-.5-.3.01-.08.13-.17.35-.26 1.36-.59 2.26-.98 2.72-1.17 1.29-.54 1.56-.63 1.73-.63.04 0 .13.01.18.05.05.04.06.09.07.13.004.04 0 .08-.002.12z"/>
+        </svg>
+    </a>
+
+    <script>
+        // API Configuration
+        const API_URL = 'https://static-crane-seeutech-17dd4df3.koyeb.app/api/channels';
+        const SMARTLINK_URL = 'https://staggermeaningless.com/djr63xfh5?key=0594e81080ace7ae2229d79efcbc8072';
+        const AD_FREQUENCY = 6;
+
+        // Ad Configuration
+        const AD_CONFIG = {
+            key: 'e370435c2937a2c6a0c3fa900e0430ac',
+            format: 'iframe',
+            height: 250,
+            width: 300,
+            scriptUrl: 'https://staggermeaningless.com/e370435c2937a2c6a0c3fa900e0430ac/invoke.js'
+        };
+
+        // Global State
+        let allChannels = [];
+        let filtered = [];
+        let pendingChannelData = null;
+        let adOpened = false;
+
+        // DOM Elements
+        const grid = document.getElementById('grid');
+        const loader = document.getElementById('loader');
+        const searchInput = document.getElementById('searchInput');
+        const errorMsg = document.getElementById('error-msg');
+
+        // Initialize App
+        async function init() {
+            try {
+                const res = await fetch(API_URL);
+                const json = await res.json();
+                
+                if (json.success && Array.isArray(json.data)) {
+                    allChannels = json.data;
+                    renderGrid(allChannels);
+                } else {
+                    throw new Error("Invalid data format");
+                }
+            } catch (err) {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = "Unable to load channels. Please try again later.";
+                console.error(err);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Apply Filters
+        function applyFilters() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            filtered = allChannels.filter(c => {
+                const matchesSearch = !query || c.title.toLowerCase().includes(query);
+                return matchesSearch;
+            });
+
+            renderGrid(filtered);
+        }
+
+        // Create Ad Card
+        function createAdCard() {
+            const adCard = document.createElement('div');
+            adCard.className = 'ad-card';
+            
+            const adId = 'ad-' + Math.random().toString(36).substr(2, 9);
+            
+            adCard.innerHTML = `
+                <div class="ad-label">ADVERTISEMENT</div>
+                <div class="ad-container" id="${adId}"></div>
+            `;
+            
+            setTimeout(() => {
+                const container = document.getElementById(adId);
+                if (!container) return;
+                
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width:100%;height:120px;border:none;display:block;background:#0a0a0c;';
+                iframe.setAttribute('scrolling', 'no');
+                iframe.setAttribute('frameborder', '0');
+                
+                container.appendChild(iframe);
+                
+                const doc = iframe.contentWindow.document;
+                doc.open();
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                margin: 0;
+                                padding: 10px;
+                                background: #0a0a0c;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-height: 100px;
+                                overflow: hidden;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <script type="text/javascript">
+                            atOptions = {
+                                'key': '${AD_CONFIG.key}',
+                                'format': '${AD_CONFIG.format}',
+                                'height': ${AD_CONFIG.height},
+                                'width': ${AD_CONFIG.width},
+                                'params': {}
+                            };
+                        <\/script>
+                        <script type="text/javascript" src="${AD_CONFIG.scriptUrl}"><\/script>
+                    </body>
+                    </html>
+                `);
+                doc.close();
+                
+            }, 50);
+            
+            return adCard;
+        }
+
+        // Handle Channel Click
+        function handleChannelClick(item) {
+            pendingChannelData = item;
+            adOpened = true;
+            
+            window.location.href = SMARTLINK_URL;
+            
+            setTimeout(() => {
+                if (pendingChannelData && window.Android && window.Android.playChannel) {
+                    window.Android.playChannel(JSON.stringify(pendingChannelData));
+                    pendingChannelData = null;
+                    adOpened = false;
+                }
+            }, 2000);
+        }
+
+        // Render Grid
+        function renderGrid(data) {
+            grid.innerHTML = '';
+            
+            if (data.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-dim);">No channels match your search</div>`;
+                return;
+            }
+
+            data.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="logo-box">
+                        <img src="${item.logo}" alt="" onerror="this.src='https://via.placeholder.com/150/1c1c1f/ffffff?text=TV'">
+                    </div>
+                    <div class="channel-meta">
+                        <div class="channel-name">${item.title}</div>
+                        <div class="channel-tag">${item.groupTitle || 'LIVE'}</div>
+                    </div>
+                `;
+                
+                card.onclick = () => handleChannelClick(item);
+                grid.appendChild(card);
+
+                if ((index + 1) % AD_FREQUENCY === 0 && index < data.length - 1) {
+                    const adCard = createAdCard();
+                    grid.appendChild(adCard);
+                }
+            });
+            
+            if (data.length > AD_FREQUENCY) {
+                const adCard = createAdCard();
+                grid.appendChild(adCard);
+            }
+        }
+
+        // Handle visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && pendingChannelData && adOpened) {
+                setTimeout(() => {
+                    if (window.Android && window.Android.playChannel) {
+                        window.Android.playChannel(JSON.stringify(pendingChannelData));
+                    }
+                    pendingChannelData = null;
+                    adOpened = false;
+                }, 500);
+            }
+        });
+
+        // Handle window focus
+        window.addEventListener('focus', function() {
+            if (pendingChannelData && adOpened) {
+                setTimeout(() => {
+                    if (window.Android && window.Android.playChannel) {
+                        window.Android.playChannel(JSON.stringify(pendingChannelData));
+                    }
+                    pendingChannelData = null;
+                    adOpened = false;
+                }, 500);
+            }
+        });
+
+        // Event Listeners
+        searchInput.addEventListener('input', applyFilters);
+
+        // Start the app
+        init();
+    </script>
 </body>
 </html>
