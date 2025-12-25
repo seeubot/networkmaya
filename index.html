@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Stream Channels</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
     <style>
         :root {
             --bg-color: #0a0a0c;
@@ -241,6 +243,77 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Video Player Modal */
+        .video-modal {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+        }
+
+        .video-modal.active {
+            display: flex;
+        }
+
+        .video-header {
+            background: rgba(10, 10, 12, 0.95);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .video-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .shaka-video-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            object-fit: contain;
+        }
+
+        .shaka-spinner-container,
+        .shaka-spinner,
+        .shaka-spinner-svg {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+
         @media (max-width: 640px) {
             .telegram-btn {
                 bottom: 20px;
@@ -251,6 +324,12 @@
             .telegram-btn svg {
                 width: 28px;
                 height: 28px;
+            }
+            .video-header {
+                padding: 10px 12px;
+            }
+            .video-title {
+                font-size: 14px;
             }
         }
     </style>
@@ -270,6 +349,17 @@
         <div id="loader" class="loader"><div class="spinner"></div></div>
         <div id="grid" class="channels-grid"></div>
     </main>
+
+    <!-- Video Player Modal -->
+    <div id="videoModal" class="video-modal">
+        <div class="video-header">
+            <div class="video-title" id="videoTitle">Channel Name</div>
+            <button class="close-btn" id="closeVideoBtn">&times;</button>
+        </div>
+        <div class="shaka-video-container" data-shaka-player>
+            <video id="videoPlayer" autoplay playsinline preload="metadata" poster=""></video>
+        </div>
+    </div>
 
     <a href="https://t.me/+t9rJ42tcRJI2MDFl" target="_blank" class="telegram-btn" aria-label="Join our Telegram">
         <svg viewBox="0 0 24 24">
@@ -297,12 +387,193 @@
         let filtered = [];
         let pendingChannelData = null;
         let adOpened = false;
+        let shakaPlayer = null;
+        let shakaUI = null;
 
         // DOM Elements
         const grid = document.getElementById('grid');
         const loader = document.getElementById('loader');
         const searchInput = document.getElementById('searchInput');
         const errorMsg = document.getElementById('error-msg');
+        const videoModal = document.getElementById('videoModal');
+        const videoTitle = document.getElementById('videoTitle');
+        const closeVideoBtn = document.getElementById('closeVideoBtn');
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        // Initialize Shaka Player
+        async function initShakaPlayer() {
+            shaka.polyfill.installAll();
+
+            if (!shaka.Player.isBrowserSupported()) {
+                console.error('Browser not supported');
+                return null;
+            }
+
+            const player = new shaka.Player();
+            await player.attach(videoPlayer);
+
+            const container = document.querySelector('.shaka-video-container');
+            const ui = new shaka.ui.Overlay(player, container, videoPlayer);
+
+            ui.configure({
+                controlPanelElements: [
+                    'play_pause', 'time_and_duration', 'mute', 'volume',
+                    'spacer', 'language', 'captions', 'picture_in_picture',
+                    'quality', 'fullscreen'
+                ],
+                volumeBarColors: {
+                    base: 'purple',
+                    level: 'purple'
+                },
+                seekBarColors: {
+                    base: 'gold',
+                    buffered: 'gold',
+                    played: 'gold'
+                }
+            });
+
+            player.configure({
+                streaming: {
+                    lowLatencyMode: true,
+                    bufferingGoal: 15,
+                    rebufferingGoal: 2,
+                    bufferBehind: 15,
+                    retryParameters: {
+                        timeout: 10000,
+                        maxAttempts: 5,
+                        baseDelay: 300,
+                        backoffFactor: 1.2
+                    },
+                    segmentRequestTimeout: 8000,
+                    segmentPrefetchLimit: 2,
+                    useNativeHlsOnSafari: true
+                },
+                manifest: {
+                    retryParameters: {
+                        timeout: 8000,
+                        maxAttempts: 3
+                    }
+                }
+            });
+
+            player.addEventListener('error', (event) => {
+                console.error('Shaka Player Error:', event.detail);
+            });
+
+            return { player, ui };
+        }
+
+        // Play Channel in Video Player
+        async function playChannelInPlayer(channelData) {
+            videoTitle.textContent = channelData.title;
+            videoModal.classList.add('active');
+
+            if (!shakaPlayer) {
+                const result = await initShakaPlayer();
+                if (result) {
+                    shakaPlayer = result.player;
+                    shakaUI = result.ui;
+                }
+            }
+
+            if (!shakaPlayer) {
+                console.error('Failed to initialize player');
+                return;
+            }
+
+            try {
+                // Configure DRM if needed
+                let drmConfig = {
+                    clearKeys: {
+                        "bd1ea6a1c1fb5dcdb709434e0826bbc0": "f57f22cba32739ce7beb1fab3f3d060b"
+                    }
+                };
+
+                let cookieHeader = "hdnea=st=1764981808~exp=1765068208~acl=/*~hmac=bffcd924e504f2c4a22288e72d759a7282ea0daf9325f3c1b867d0c03f28731c";
+
+                // Try to fetch M3U data for cookies
+                try {
+                    const response = await fetch('https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u');
+                    const m3uText = await response.text();
+                    const lines = m3uText.split('\n');
+
+                    for (let i = 0; i < lines.length; i++) {
+                        if (lines[i].includes('Star_Sports_HD')) {
+                            for (let j = i - 1; j >= 0; j--) {
+                                if (lines[j].startsWith('#EXTHTTP:')) {
+                                    const cookieMatch = lines[j].match(/"cookie":"([^"]+)"/);
+                                    if (cookieMatch) {
+                                        cookieHeader = cookieMatch[1];
+                                    }
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch M3U:', error);
+                }
+
+                shakaPlayer.configure({ drm: drmConfig });
+
+                shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    request.headers['Referer'] = 'https://www.jiotv.com/';
+                    request.headers['User-Agent'] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+                    request.headers['Cookie'] = cookieHeader;
+
+                    if (
+                        (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+                            type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+                        request.uris[0] && !request.uris[0].includes('__hdnea=')
+                    ) {
+                        const separator = request.uris[0].includes('?') ? '&' : '?';
+                        request.uris[0] += separator + cookieHeader;
+                    }
+                });
+
+                // Load the stream URL from channel data
+                const streamUrl = channelData.url || "https://jiotvpllive.cdn.jio.com/bpk-tv/Sports18_1_HD_BTS/output/index.mpd";
+                
+                await shakaPlayer.load(streamUrl);
+
+                // Attempt autoplay
+                videoPlayer.muted = false;
+                try {
+                    await videoPlayer.play();
+                    console.log('Unmuted autoplay successful');
+                } catch (error) {
+                    console.log('Unmuted autoplay failed, trying muted');
+                    videoPlayer.muted = true;
+                    await videoPlayer.play();
+                }
+
+                // Enable sound on interaction
+                let hasUserInteracted = false;
+                const enableSoundOnInteraction = () => {
+                    if (!hasUserInteracted && videoPlayer.muted) {
+                        videoPlayer.muted = false;
+                        hasUserInteracted = true;
+                        console.log('Sound enabled after user interaction');
+                    }
+                };
+                ['click', 'touchstart', 'keydown'].forEach(event => {
+                    document.addEventListener(event, enableSoundOnInteraction, { once: true });
+                });
+
+            } catch (error) {
+                console.error('Load error:', error);
+            }
+        }
+
+        // Close Video Player
+        function closeVideoPlayer() {
+            videoModal.classList.remove('active');
+            if (shakaPlayer) {
+                shakaPlayer.unload();
+            }
+            videoPlayer.pause();
+        }
 
         // Initialize App
         async function init() {
@@ -403,18 +674,27 @@
 
         // Handle Channel Click
         function handleChannelClick(item) {
-            pendingChannelData = item;
-            adOpened = true;
-            
-            window.location.href = SMARTLINK_URL;
-            
-            setTimeout(() => {
-                if (pendingChannelData && window.Android && window.Android.playChannel) {
-                    window.Android.playChannel(JSON.stringify(pendingChannelData));
-                    pendingChannelData = null;
-                    adOpened = false;
-                }
-            }, 2000);
+            // Check if running in Android WebView
+            if (window.Android && window.Android.playChannel) {
+                // Store channel data for ad flow
+                pendingChannelData = item;
+                adOpened = true;
+                
+                // Open smart link ad in external browser
+                window.location.href = SMARTLINK_URL;
+                
+                // Fallback: Play immediately after short delay if ad doesn't open
+                setTimeout(() => {
+                    if (pendingChannelData && window.Android && window.Android.playChannel) {
+                        window.Android.playChannel(JSON.stringify(pendingChannelData));
+                        pendingChannelData = null;
+                        adOpened = false;
+                    }
+                }, 2000);
+            } else {
+                // Web browser: play directly in modal
+                playChannelInPlayer(item);
+            }
         }
 
         // Render Grid
@@ -454,7 +734,7 @@
             }
         }
 
-        // Handle visibility change
+        // Handle visibility change (for Android app)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden && pendingChannelData && adOpened) {
                 setTimeout(() => {
@@ -467,7 +747,7 @@
             }
         });
 
-        // Handle window focus
+        // Handle window focus (for Android app)
         window.addEventListener('focus', function() {
             if (pendingChannelData && adOpened) {
                 setTimeout(() => {
@@ -482,9 +762,17 @@
 
         // Event Listeners
         searchInput.addEventListener('input', applyFilters);
+        closeVideoBtn.addEventListener('click', closeVideoPlayer);
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && videoModal.classList.contains('active')) {
+                closeVideoPlayer();
+            }
+        });
 
         // Start the app
         init();
     </script>
 </body>
-</html>
+</html>s
