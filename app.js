@@ -9,6 +9,16 @@ if ('serviceWorker' in navigator) {
         });
 }
 
+// Load additional ad network script
+(function() {
+    const adScript = document.createElement('script');
+    adScript.src = 'https://quge5.com/88/tag.min.js';
+    adScript.setAttribute('data-zone', '196894');
+    adScript.async = true;
+    adScript.setAttribute('data-cfasync', 'false');
+    document.head.appendChild(adScript);
+})();
+
 // Add protection against right-click and inspect
 document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
