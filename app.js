@@ -9,16 +9,6 @@ if ('serviceWorker' in navigator) {
         });
 }
 
-// Load additional ad network script
-(function() {
-    const adScript = document.createElement('script');
-    adScript.src = 'https://quge5.com/88/tag.min.js';
-    adScript.setAttribute('data-zone', '196894');
-    adScript.async = true;
-    adScript.setAttribute('data-cfasync', 'false');
-    document.head.appendChild(adScript);
-})();
-
 // Add protection against right-click and inspect
 document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
@@ -88,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Disable text selection for certain elements
     const style = document.createElement('style');
     style.textContent = `
-        .channel-card, .ad-card, .video-container {
+        .channel-card, .video-container {
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -127,23 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // API Configuration
 const API_URL = 'https://static-crane-seeutech-17dd4df3.koyeb.app/api/channels';
-const SMARTLINK_URL = 'https://staggermeaningless.com/djr63xfh5?key=0594e81080ace7ae2229d79efcbc8072';
-const AD_FREQUENCY = 6;
-
-// Ad Configuration
-const AD_CONFIG = {
-    key: 'e370435c2937a2c6a0c3fa900e0430ac',
-    format: 'iframe',
-    height: 250,
-    width: 300,
-    scriptUrl: 'https://staggermeaningless.com/e370435c2937a2c6a0c3fa900e0430ac/invoke.js'
-};
 
 // Global State
 let allChannels = [];
 let filtered = [];
-let pendingChannelData = null;
-let adOpened = false;
 let shakaPlayer = null;
 let shakaUI = null;
 
@@ -453,105 +430,10 @@ function applyFilters() {
     renderGrid(filtered);
 }
 
-// Create Ad Card
-function createAdCard() {
-    const adCard = document.createElement('div');
-    adCard.className = 'ad-card';
-    
-    const adId = 'ad-' + Math.random().toString(36).substr(2, 9);
-    
-    adCard.innerHTML = `
-        <div class="ad-label">ADVERTISEMENT</div>
-        <div class="ad-container" id="${adId}"></div>
-    `;
-    
-    setTimeout(() => {
-        const container = document.getElementById(adId);
-        if (!container) return;
-        
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'width:100%;height:120px;border:none;display:block;background:#0a0a0c;';
-        iframe.setAttribute('scrolling', 'no');
-        iframe.setAttribute('frameborder', '0');
-        
-        container.appendChild(iframe);
-        
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {
-                        margin: 0;
-                        padding: 10px;
-                        background: #0a0a0c;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 100px;
-                        overflow: hidden;
-                    }
-                </style>
-            </head>
-            <body>
-                <script type="text/javascript">
-                    atOptions = {
-                        'key': '${AD_CONFIG.key}',
-                        'format': '${AD_CONFIG.format}',
-                        'height': ${AD_CONFIG.height},
-                        'width': ${AD_CONFIG.width},
-                        'params': {}
-                    };
-                <\/script>
-                <script type="text/javascript" src="${AD_CONFIG.scriptUrl}"><\/script>
-            </body>
-            </html>
-        `);
-        doc.close();
-        
-    }, 50);
-    
-    return adCard;
-}
-
 // Handle Channel Click
 function handleChannelClick(item) {
-    // Check if running in Android WebView
-    if (window.Android && window.Android.playChannel) {
-        // Store channel data for later playback
-        pendingChannelData = item;
-        adOpened = true;
-        
-        // Open smart link ad in new window/tab (external browser)
-        const adWindow = window.open(SMARTLINK_URL, '_blank');
-        
-        // If popup was blocked or failed, try direct navigation
-        if (!adWindow || adWindow.closed || typeof adWindow.closed === 'undefined') {
-            console.log('Popup blocked, trying direct navigation');
-            window.location.href = SMARTLINK_URL;
-        }
-        
-        // Play channel after short delay (fallback if user closes ad quickly)
-        setTimeout(() => {
-            if (pendingChannelData && window.Android && window.Android.playChannel) {
-                window.Android.playChannel(JSON.stringify(pendingChannelData));
-                pendingChannelData = null;
-                adOpened = false;
-            }
-        }, 3000);
-    } else {
-        // Web browser: Show ad first, then play
-        // Open smartlink in new tab
-        const adWindow = window.open(SMARTLINK_URL, '_blank');
-        
-        // Wait a moment then play video
-        setTimeout(() => {
-            playChannelInPlayer(item);
-        }, 1000);
-    }
+    // Directly play channel without any ads
+    playChannelInPlayer(item);
 }
 
 // Render Grid
@@ -563,7 +445,7 @@ function renderGrid(data) {
         return;
     }
 
-    data.forEach((item, index) => {
+    data.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
         card.innerHTML = `
@@ -578,44 +460,8 @@ function renderGrid(data) {
         
         card.onclick = () => handleChannelClick(item);
         grid.appendChild(card);
-
-        if ((index + 1) % AD_FREQUENCY === 0 && index < data.length - 1) {
-            const adCard = createAdCard();
-            grid.appendChild(adCard);
-        }
     });
-    
-    if (data.length > AD_FREQUENCY) {
-        const adCard = createAdCard();
-        grid.appendChild(adCard);
-    }
 }
-
-// Handle visibility change (for Android app)
-document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && pendingChannelData && adOpened) {
-        setTimeout(() => {
-            if (window.Android && window.Android.playChannel) {
-                window.Android.playChannel(JSON.stringify(pendingChannelData));
-            }
-            pendingChannelData = null;
-            adOpened = false;
-        }, 500);
-    }
-});
-
-// Handle window focus (for Android app)
-window.addEventListener('focus', function() {
-    if (pendingChannelData && adOpened) {
-        setTimeout(() => {
-            if (window.Android && window.Android.playChannel) {
-                window.Android.playChannel(JSON.stringify(pendingChannelData));
-            }
-            pendingChannelData = null;
-            adOpened = false;
-        }, 500);
-    }
-});
 
 // Event Listeners
 searchInput.addEventListener('input', applyFilters);
